@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>정류장까지 길 안내 (프론트 전용 데모)</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#content">본문으로 건너뛰기</a>
+
+  <header role="banner">
+    <nav aria-label="주요">
+      <ul class="nav">
+        <li><span aria-current="page">정류장까지 길 안내</span></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="content" tabindex="-1">
+    <section aria-labelledby="title" class="container">
+      <h1 id="title">버스정류장까지 길 안내</h1>
+
+      <div class="controls" role="group" aria-label="보기 설정">
+        <button id="btnInc" class="btn" aria-label="글자 크게">A+</button>
+        <button id="btnDec" class="btn" aria-label="글자 작게">A−</button>
+        <button id="btnContrast" class="btn" aria-pressed="false" aria-label="고대비 모드 전환">고대비</button>
+        <button id="btnSpeak" class="btn" aria-label="현재 단계 음성 안내">음성안내 ▶</button>
+      </div>
+
+      <form id="routeForm" aria-describedby="help" class="panel" novalidate>
+        <p id="help">현재 위치 사용을 허용하거나, 출발 좌표와 정류장을 선택하세요.</p>
+
+        <div class="grid">
+          <div class="field">
+            <label for="pref">이용자 유형</label>
+            <select id="pref" name="pref">
+              <option value="elder">노약자</option>
+              <option value="low-vision">시각장애</option>
+              <option value="low-hearing">청각장애</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="stop">정류장</label>
+            <select id="stop" name="stop">
+              <option value="1">중앙시장 정류장</option>
+              <option value="2">시청 앞 정류장</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="lat">출발 위도</label>
+            <input id="lat" name="lat" inputmode="decimal" placeholder="자동" />
+          </div>
+
+          <div class="field">
+            <label for="lng">출발 경도</label>
+            <input id="lng" name="lng" inputmode="decimal" placeholder="자동" />
+          </div>
+        </div>
+
+        <div class="btns">
+          <button type="button" id="btnLocate" class="btn">현재 위치 사용</button>
+          <button type="submit" class="btn btn-primary">길 안내 시작</button>
+        </div>
+      </form>
+
+      <!-- 스크린리더 라이브 영역 -->
+      <div id="live" aria-live="polite" class="sr-only"></div>
+
+      <!-- 단계 안내 뷰 -->
+      <div id="stepView" class="step-view" tabindex="-1" aria-label="경로 안내(단계별)"></div>
+      <p class="hint">단축키: ◀ 이전 · ▶ 다음 · S 음성 · H 고대비 · = 확대 · - 축소</p>
+
+      <details class="note">
+        <summary>실행 안내</summary>
+        <p>지오로케이션은 보안 컨텍스트(https 또는 http://localhost)에서만 동작합니다. VS Code의 <strong>Live Server</strong> 확장이나 아래 명령으로 로컬 서버를 띄우세요:</p>
+        <pre><code>python -m http.server 5500</code></pre>
+        <p>그 다음 <code>http://localhost:5500</code>로 접속하세요.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer>© 2025 정류장 길 안내 데모</footer>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
