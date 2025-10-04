@@ -1,0 +1,13 @@
+.controls { display:flex; gap:.5rem; margin:.5rem 0 1rem; flex-wrap:wrap; }
+.btn { border:2px solid #111; background:#fff; padding:.55rem .9rem; border-radius:12px; font-size:1rem; cursor:pointer; }
+.btn-primary { background: var(--accent); color:#fff; border-color: var(--accent); }
+.panel { border:2px solid #111; border-radius:12px; padding:1rem; background:#fff; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; }
+.field label { display:block; font-weight:600; margin-bottom:.35rem; }
+.field input, .field select { width:100%; padding:.6rem .7rem; border:1.5px solid #aaa; border-radius:10px; font-size:1rem; }
+.step-view { margin-top:1rem; border:3px solid #111; padding:1rem; border-radius:16px; min-height:10rem; background:#fafafa; }
+.step { font-size:1.65rem; line-height:1.5; }
+.meta { font-size:1rem; opacity:.92; margin-top:.25rem; }
+.big-arrow { font-size:3rem; margin-bottom:.25rem; }
+.sr-only { position:absolute; left:-9999px; }
+.hint { opacity:.8; margin-top:.5rem; }

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}정류장 길 안내{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/main.css" />
+  <link rel="stylesheet" href="/static/css/route.css" />
+</head>
+<body>
+  <a class="skip-link" href="#content">본문으로 건너뛰기</a>
+  <header role="banner">
+    <nav aria-label="주요">
+      <ul><li><a href="/route/">정류장 길 안내</a></li></ul>
+    </nav>
+  </header>
+  <main id="content" tabindex="-1">{% block content %}{% endblock %}</main>
+  <footer>© 2025 정류장 길 안내</footer>
+  <script src="/static/js/main.js" defer></script>
+  <script src="/static/js/route.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}정류장까지 길 안내{% endblock %}
+{% block content %}
+<section aria-labelledby="title" class="container">
+  <h1 id="title">버스정류장까지 길 안내</h1>
+
+  <div class="controls" role="group" aria-label="보기 설정">
+    <button id="btnInc" class="btn">A+</button>
+    <button id="btnDec" class="btn">A−</button>
+    <button id="btnContrast" class="btn" aria-pressed="false">고대비</button>
+    <button id="btnSpeak" class="btn">음성안내 ▶</button>
+  </div>
+
+  <form id="routeForm" class="panel" novalidate>
+    <div class="grid">
+      <div class="field">
+        <label for="pref">이용자 유형</label>
+        <select id="pref"><option value="elder">노약자</option><option value="low-vision">시각장애</option><option value="low-hearing">청각장애</option></select>
+      </div>
+      <div class="field">
+        <label for="stop">정류장</label>
+        <select id="stop"><option value="1">중앙시장 정류장</option><option value="2">시청 앞 정류장</option></select>
+      </div>
+      <div class="field">
+        <label for="lat">출발 위도</label><input id="lat" inputmode="decimal" placeholder="자동" />
+      </div>
+      <div class="field">
+        <label for="lng">출발 경도</label><input id="lng" inputmode="decimal" placeholder="자동" />
+      </div>
+    </div>
+    <div class="btns">
+      <button type="button" id="btnLocate" class="btn">현재 위치 사용</button>
+      <button type="submit" class="btn btn-primary">길 안내 시작</button>
+    </div>
+  </form>
+
+  <div id="live" aria-live="polite" class="sr-only"></div>
+  <div id="stepView" class="step-view" tabindex="-1" aria-label="경로 안내(단계별)"></div>
+  <p class="hint">단축키: ◀/▶, S, H, =, -</p>
+</section>
+{% endblock %}
