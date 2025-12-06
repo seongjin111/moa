@@ -1,0 +1,403 @@
+/* 기본 리셋 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: #f3f4f6;
+  font-family: "Segoe UI", Pretendard, Apple SD Gothic Neo, sans-serif;
+}
+
+/* 버튼 공통 */
+button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* 상단 검정바 */
+.topbar {
+  height: 48px;
+  background: #111;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-bottom: 1px solid #222;
+}
+
+.topbar-left {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.logo {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* 리본 */
+.ribbon {
+  background: #222;
+  color: #ddd;
+}
+
+.menu-bar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #333;
+}
+
+.menu-tab {
+  padding: 6px 14px;
+  background: #333;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #e5e5e5;
+}
+
+.menu-tab.active {
+  background: #facc15;
+  color: #111;
+  font-weight: 600;
+}
+
+.ribbon-content {
+  padding: 8px 12px;
+  display: flex;
+  gap: 12px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* 리본 그룹 */
+.group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: #333;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.group-title {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-right: 2px;
+}
+
+/* 서식 버튼 */
+.text-cmd {
+  padding: 4px 6px;
+  background: #444;
+  border-radius: 4px;
+  color: #e8e8e8;
+}
+
+.text-cmd:hover {
+  background: #555;
+}
+
+/* 색 동그라미 */
+.dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  display: inline-block;
+}
+
+.dot-white {
+  background: #ffffff;
+}
+
+.dot-ivory {
+  background: #f9f5e7;
+}
+
+.dot-black {
+  background: #111827;
+}
+
+/* 전체 레이아웃 */
+.layout {
+  display: flex;
+  height: calc(100% - 118px);
+}
+
+/* 사이드바 */
+.sidebar {
+  width: 260px;
+  background: #f1f5f9;
+  border-right: 1px solid #d4d4d8;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  padding: 8px 8px 4px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.small-btn {
+  padding: 2px 6px;
+  background: #e4e4e7;
+  border-radius: 4px;
+}
+
+.small-btn:hover {
+  background: #d4d4d8;
+}
+
+/* 리스트 */
+.list {
+  list-style: none;
+}
+
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px;
+  margin-bottom: 4px;
+  background: #f9fafb;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.list-item.active {
+  background: #111827;
+  color: white;
+}
+
+.list-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.list-action-btn {
+  font-size: 12px;
+  padding: 2px 6px;
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+
+.list-action-btn:hover {
+  background: #d4d4d8;
+}
+
+/* 메인 */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 페이지 헤더 */
+.page-header-bar {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.page-title-input {
+  flex: 1;
+  font-size: 18px;
+  border: none;
+  outline: none;
+  padding: 4px;
+}
+
+.page-subtitle-input {
+  flex: 1;
+  font-size: 14px;
+  color: #666;
+  border: none;
+  outline: none;
+  padding: 4px;
+}
+
+/* 노트 영역 */
+.note-wrapper {
+  flex: 1;
+  padding: 18px;
+  overflow: auto;
+  background: #e5e7eb;
+}
+
+.note-viewport {
+  display: flex;
+  justify-content: center;
+}
+
+.note-area {
+  width: 960px;
+  height: 1400px;
+  position: relative;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.12);
+  overflow: hidden;
+  transform-origin: top center;
+}
+
+/* 배경색 */
+.bg-white {
+  background: #ffffff;
+}
+
+.bg-ivory {
+  background: #f9f5e7;
+}
+
+.bg-black {
+  background: #020617;
+  color: white;
+}
+
+/* 패턴 */
+.pattern-grid {
+  background-image: linear-gradient(#d4d4d4 1px, transparent 1px),
+    linear-gradient(90deg, #d4d4d4 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+.pattern-lines {
+  background-image: linear-gradient(#d4d4d4 1px, transparent 1px);
+  background-size: 100% 30px;
+}
+
+.pattern-dots {
+  background-image: radial-gradient(#d4d4d4 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* 레이어 */
+.layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* 텍스트에디터 - 전체 문서 입력 */
+.text-editor {
+  padding: 40px;
+  font-size: 16px;
+  line-height: 1.7;
+  outline: none;
+  z-index: 30;
+  overflow: auto;
+}
+
+/* 텍스트 선택했을 때만 박스 표시 */
+.text-editor:focus {
+  outline: 2px solid rgba(180, 180, 180, 0.6);
+}
+
+/* 필기 레이어 */
+.ink-layer {
+  z-index: 40;
+  pointer-events: none;
+}
+
+/* 이미지/오브젝트 레이어 */
+.object-layer {
+  z-index: 50;
+}
+
+/* 이미지 오브젝트 */
+.image-wrapper {
+  position: absolute;
+  cursor: move;
+}
+
+.image-wrapper.selected img {
+  outline: 3px solid #3b82f6;
+}
+
+.image-wrapper img {
+  display: block;
+  max-width: 100%;
+  user-select: none;
+}
+
+.resize-handle {
+  width: 14px;
+  height: 14px;
+  background: white;
+  border: 2px solid #3b82f6;
+  border-radius: 999px;
+  position: absolute;
+  bottom: -7px;
+  right: -7px;
+  cursor: se-resize;
+}
+
+/* 텍스트 박스 오브젝트 */
+.textbox {
+  position: absolute;
+  min-width: 150px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #d4d4d4;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: move;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.textbox:focus {
+  outline: 2px solid #3b82f6;
+}
+
+/* 토스트 */
+.toast-container {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 999;
+}
+
+.toast {
+  background: #111827;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  animation: fadein 0.2s ease-out, fadeout 0.4s ease-in 2.3s forwards;
+}
+
+@keyframes fadein {
+  from { opacity:0; transform:translateY(6px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+@keyframes fadeout {
+  to { opacity:0; transform:translateY(6px); }
+}

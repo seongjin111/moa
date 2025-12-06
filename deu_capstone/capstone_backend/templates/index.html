@@ -1,0 +1,223 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Minji Notebook</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+  </script>
+</head>
+<body>
+
+  <!-- 상단 검정 네비게이션 -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">🟣 Minji Notebook</span>
+      <span class="user-label">사용자: guest</span>
+    </div>
+  </header>
+
+  <!-- 리본 메뉴 -->
+  <div class="ribbon">
+    <nav class="menu-bar">
+      <button class="menu-tab active" data-tab="home">홈</button>
+      <button class="menu-tab" data-tab="insert">삽입</button>
+      <button class="menu-tab" data-tab="draw">그리기</button>
+      <button class="menu-tab" data-tab="view">보기</button>
+      <button class="menu-tab" data-tab="ai">AI</button>
+      <button class="menu-tab" data-tab="file">파일</button>
+    </nav>
+
+    <!-- 홈 탭 -->
+    <section class="ribbon-content" id="tab-home">
+      <div class="group">
+        <div class="group-title">글꼴</div>
+        <select id="fontFamilySelect">
+          <option value="default">기본</option>
+          <option value="serif">명조</option>
+          <option value="mono">코딩체</option>
+        </select>
+        <select id="fontSizeSelect">
+          <option value="12">12</option>
+          <option value="14">14</option>
+          <option value="16" selected>16</option>
+          <option value="18">18</option>
+          <option value="20">20</option>
+          <option value="24">24</option>
+        </select>
+      </div>
+
+      <div class="group">
+        <div class="group-title">서식</div>
+        <button class="text-cmd" data-cmd="bold"><b>B</b></button>
+        <button class="text-cmd" data-cmd="italic"><i>I</i></button>
+        <button class="text-cmd" data-cmd="underline"><u>U</u></button>
+        <button class="text-cmd" data-cmd="insertUnorderedList">• 목록</button>
+        <button class="text-cmd" data-cmd="insertOrderedList">1. 목록</button>
+      </div>
+
+      <div class="group">
+        <div class="group-title">정렬</div>
+        <button class="text-cmd" data-cmd="justifyLeft">좌</button>
+        <button class="text-cmd" data-cmd="justifyCenter">중앙</button>
+        <button class="text-cmd" data-cmd="justifyRight">우</button>
+      </div>
+    </section>
+
+    <!-- 삽입 탭 -->
+    <section class="ribbon-content hidden" id="tab-insert">
+      <div class="group">
+        <div class="group-title">텍스트</div>
+        <button id="addTextBoxBtn">텍스트 박스</button>
+      </div>
+
+      <div class="group">
+        <div class="group-title">이미지 / PDF</div>
+        <button id="insertImageBtn">이미지 삽입</button>
+        <input type="file" id="imageInput" accept="image/*" hidden />
+
+        <button id="uploadPdfBtn">PDF 삽입</button>
+        <input type="file" id="pdfInput" accept="application/pdf" hidden />
+      </div>
+    </section>
+
+    <!-- 그리기 탭 -->
+    <section class="ribbon-content hidden" id="tab-draw">
+      <div class="group">
+        <div class="group-title">도구</div>
+        <button class="mode-btn active" data-mode="pen">펜</button>
+        <button class="mode-btn" data-mode="highlighter">형광펜</button>
+        <button class="mode-btn" data-mode="eraser">지우개</button>
+      </div>
+
+      <div class="group">
+        <div class="group-title">펜</div>
+        <input type="color" id="inkColorPicker" value="#e91e63" />
+        <input type="range" id="inkThickness" min="1" max="30" value="4" />
+        <span id="inkThicknessLabel">4 px</span>
+      </div>
+
+      <div class="group">
+        <div class="group-title">작업</div>
+        <button id="undoInkBtn">되돌리기</button>
+        <button id="redoInkBtn">다시하기</button>
+        <button id="clearInkBtn">전체지우기</button>
+      </div>
+    </section>
+
+    <!-- 보기 탭 -->
+    <section class="ribbon-content hidden" id="tab-view">
+      <div class="group">
+        <div class="group-title">배경색</div>
+        <button class="bg-btn" data-bg="white"><span class="dot dot-white"></span></button>
+        <button class="bg-btn" data-bg="ivory"><span class="dot dot-ivory"></span></button>
+        <button class="bg-btn" data-bg="black"><span class="dot dot-black"></span></button>
+      </div>
+
+      <div class="group">
+        <div class="group-title">패턴</div>
+        <button class="pattern-btn" data-pattern="none">없음</button>
+        <button class="pattern-btn" data-pattern="grid">격자</button>
+        <button class="pattern-btn" data-pattern="lines">줄</button>
+        <button class="pattern-btn" data-pattern="dots">도트</button>
+      </div>
+
+      <div class="group">
+        <div class="group-title">확대/축소</div>
+        <input type="range" id="zoomSlider" min="50" max="200" value="100" />
+        <span id="zoomLabel">100%</span>
+      </div>
+
+      <div class="group">
+        <div class="group-title">레이어</div>
+        <label><input type="checkbox" id="toggleInkLayer" checked /> 필기</label>
+        <label><input type="checkbox" id="toggleTextLayer" checked /> 텍스트</label>
+        <label><input type="checkbox" id="toggleImageLayer" checked /> 이미지</label>
+      </div>
+    </section>
+
+    <!-- AI 탭 -->
+    <section class="ribbon-content hidden" id="tab-ai">
+      <div class="group">
+        <div class="group-title">AI</div>
+        <button id="aiSummaryBtn">요약 (데모)</button>
+      </div>
+    </section>
+
+    <!-- 파일 탭 -->
+    <section class="ribbon-content hidden" id="tab-file">
+      <div class="group">
+        <div class="group-title">파일</div>
+        <button id="exportPageImageBtn">페이지 저장(이미지)</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- 전체 레이아웃 -->
+  <div class="layout">
+    <!-- 사이드바 -->
+    <aside class="sidebar">
+      <div class="panel">
+        <div class="panel-header">
+          <span>섹션</span>
+          <button id="addSectionBtn" class="small-btn">＋</button>
+        </div>
+        <ul id="sectionList" class="list"></ul>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span>페이지</span>
+          <button id="addPageBtn" class="small-btn">＋</button>
+        </div>
+        <ul id="pageList" class="list"></ul>
+      </div>
+    </aside>
+
+    <!-- 메인 -->
+    <main class="main">
+      <div class="page-header-bar">
+        <input id="pageTitleInput" class="page-title-input" placeholder="페이지 제목" />
+        <input id="pageSubtitleInput" class="page-subtitle-input" placeholder="부제목" />
+      </div>
+
+      <section class="note-wrapper">
+        <div class="note-viewport">
+          <div id="noteArea" class="note-area bg-white">
+
+            <!-- 패턴/배경 -->
+            <div id="backgroundLayer" class="layer background-layer"></div>
+
+            <!-- 텍스트 에디터 -->
+            <div id="textEditor" class="layer text-editor" contenteditable="true"></div>
+
+            <!-- 필기 -->
+            <canvas id="inkCanvas" class="layer ink-layer"></canvas>
+
+            <!-- 이미지/오브젝트 -->
+            <div id="objectLayer" class="layer object-layer"></div>
+
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 토스트 -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- JS -->
+  <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>
