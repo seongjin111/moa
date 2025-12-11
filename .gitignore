@@ -1,0 +1,18 @@
+# Python/Django
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+env/
+
+# Django
+/static/
+/media/
+
+# Project data
+/data/
+
+# VS Code
+.vscode/

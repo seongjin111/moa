@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>히스토리 - {{ note.title }}</title>
+  <link rel="stylesheet" href="/static/css/theme.css" />
+  <style>
+    .list { border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+    .row { display:flex; gap:12px; padding:12px; border-bottom:1px solid var(--border); align-items:center; }
+    .row:last-child { border-bottom:0; }
+    .ts { color:var(--muted); width:240px; }
+    .btn { border:1px solid var(--border); padding:6px 10px; border-radius:6px; text-decoration:none; color:var(--text); }
+  </style>
+</head>
+<body>
+  <div class="appbar"><div class="title">히스토리 - {{ note.title }}</div><div style="flex:1"></div><a class="btn" href="/edit/{{ note.note_id }}/">편집</a></div>
+  <main class="editor-wrap">
+    {% if items %}
+    <div class="list">
+      {% for h in items %}
+      <div class="row">
+        <div class="ts">{{ h.timestamp }}</div>
+        <div style="flex:1">변경사항</div>
+        <a class="btn" href="/history/{{ note.note_id }}/{{ h.id }}">상세</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+      <p>히스토리가 없습니다.</p>
+    {% endif %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<script type="module">
+  import { Editor } from 'https://esm.sh/@tiptap/core@2.5.8'
+  import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2.5.8'
+  import Image from 'https://esm.sh/@tiptap/extension-image@2.5.8'
+  import Youtube from 'https://esm.sh/@tiptap/extension-youtube@2.5.8'
+  import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@2.5.8'
+  import TextStyle from 'https://esm.sh/@tiptap/extension-text-style@2.5.8'
+  import Color from 'https://esm.sh/@tiptap/extension-color@2.5.8'
+  import Highlight from 'https://esm.sh/@tiptap/extension-highlight@2.5.8'
+
+  const el = document.getElementById('editor');
+  const initialHTML = window.__INITIAL_HTML__ || '';
+  const editor = new Editor({
+    element: el,
+    extensions: [
+      StarterKit, 
+      Image, 
+      Youtube,
+      TextStyle,
+      Color.configure({ types: ['textStyle'] }),
+      Highlight.configure({ multicolor: true }),
+      TextAlign.configure({ types: ['heading','paragraph'] }),
+    ],
+    content: initialHTML || '',
+    editorProps: {
+      // Ensure TipTap root has .tiptap for styling/behavior hooks
+      attributes: { class: 'tiptap prose prose-invert' }
+    },
+  });
+
+  // Ensure initial content is applied and log for diagnostics
+  try {
+    console.log('[Bano] initialHTML length:', (initialHTML || '').length);
+    if (initialHTML && typeof initialHTML === 'string' && initialHTML.length > 0) {
+      editor.commands.setContent(initialHTML, false);
+    }
+  } catch (e) {
+    console.warn('[Bano] setContent failed', e);
+  }
+
+  // DnD image upload
+  el.addEventListener('drop', async (e) => {
+    if (!e.dataTransfer || !e.dataTransfer.files?.length) return;
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch('/upload-image/', { method: 'POST', body: form, headers: { 'X-CSRFToken': getCsrfToken() } });
+    const data = await res.json();
+    if (res.ok) editor.commands.setImage({ src: data.url });
+  });
+
+  // YouTube insert via prompt
+  window.insertYouTube = () => {
+    const url = prompt('YouTube 링크를 입력하세요');
+    if (url) editor.commands.setYoutubeVideo({ src: url });
+  };
+
+  window.getEditorHTML = () => editor.getHTML();
+
+  function getCsrfToken() {
+    const v = document.cookie.match(/csrftoken=([^;]+)/); return v ? v[1] : '';
+  }
+  window._getCsrfToken = getCsrfToken;
+  window.__tiptap = editor;
+</script>

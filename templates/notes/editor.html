@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bano 에디터</title>
+  <link rel="stylesheet" href="/static/css/theme.css" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin: 0; }
+    .blurred { filter: blur(2px); pointer-events: none; }
+    /* Placeholder removed per request */
+  </style>
+</head>
+<body>
+  <div class="appbar">
+    <div class="title"><a href="/" style="text-decoration:none; color:inherit">Bano</a></div>
+    <input id="search" type="search" placeholder="검색" />
+    <!-- 편집 기능 제거: 토큰 열기 제거 -->
+    <div style="flex:1"></div>
+    <button id="themeToggle">모드전환</button>
+    <a id="historyLink" class="btn" href="#" style="display:none"><button>히스토리</button></a>
+    <div style="display:inline-block">
+      <button id="shareBtn" disabled>저장/공유</button>
+      <div id="shareResult" style="font-size:12px; color:var(--muted); margin-top:4px; display:none"></div>
+    </div>
+    
+  </div>
+
+  <!-- Centered modal dialog + overlay (moved outside appbar to avoid blur/pointer-events) -->
+  <div id="modalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); backdrop-filter: blur(2px); z-index:1000"></div>
+  <div id="shareDialog" style="display:none; position:fixed; z-index:1001; left:50%; top:50%; transform:translate(-50%, -50%); width:360px; max-width:90vw; background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.25);">
+    <div style="padding:16px 16px 8px; font-weight:600">공유 옵션</div>
+    <div id="choiceRow" style="padding:0 16px 16px">
+      <div style="color:var(--muted); margin-bottom:12px">열람 비밀번호를 지정하시겠습니까?</div>
+      <div style="display:flex; gap:8px; justify-content:flex-end">
+        <button id="dlgConfirm" class="btn">확인</button>
+        <button id="dlgCancel" class="btn">취소</button>
+      </div>
+    </div>
+    <div id="pwdRow" style="display:none; padding:16px">
+      <input type="password" id="viewPwd" placeholder="열람 비밀번호" style="width:100%" />
+      <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end">
+        <button id="pwdApply" class="btn">적용하여 공유 생성</button>
+        <button id="pwdBack" class="btn">뒤로</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="section-title">
+        <span>페이지</span>
+        <button id="addPageBtn" title="페이지 추가">+</button>
+      </div>
+      <div id="pageList">
+        <div class="page active">Untitled</div>
+      </div>
+    </aside>
+    <main class="editor-wrap">
+      <div class="page-header">
+        <input id="title" class="title" type="text" placeholder="제목을 입력하세요" />
+        <div style="color:var(--muted); font-size:12px;" id="timestamp"></div>
+      </div>
+      <div class="toolbar" id="tiptapToolbar">
+        <label style="margin-right:6px">글꼴:
+          <select id="fontFamilySelect">
+            <option value="">기본</option>
+            <option value="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial">시스템</option>
+            <option value="Nanum Gothic, sans-serif">나눔고딕</option>
+            <option value="Noto Sans KR, sans-serif">노토 산스</option>
+            <option value="Noto Serif KR, serif">노토 세리프</option>
+            <option value="Pretendard, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial">프리텐다드</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="Times New Roman, Times, serif">Times</option>
+            <option value="Courier New, Courier, monospace">Courier</option>
+            <option value="Batang, Times New Roman, serif">바탕</option>
+            <option value="Dotum, Arial, sans-serif">돋움</option>
+            <option value="Gulim, Arial, sans-serif">굴림</option>
+            <option value="Malgun Gothic, Arial, sans-serif">맑은 고딕</option>
+            <option value="Apple SD Gothic Neo, Noto Sans KR, sans-serif">애플 SD 고딕 네오</option>
+          </select>
+        </label>
+        <label style="margin-right:12px">크기:
+          <select id="fontSizeSelect">
+            <option value="">기본</option>
+            <option value="12px">12</option>
+            <option value="14px">14</option>
+            <option value="16px">16</option>
+            <option value="18px">18</option>
+            <option value="20px">20</option>
+            <option value="24px">24</option>
+            <option value="28px">28</option>
+            <option value="32px">32</option>
+          </select>
+        </label>
+        <button data-cmd="toggleBold" title="굵게 (Ctrl+B)"><b>B</b></button>
+        <button data-cmd="toggleItalic" title="기울임 (Ctrl+I)"><i>I</i></button>
+        <button data-cmd="toggleStrike" title="취소선"><s>S</s></button>
+        <button data-cmd="toggleBulletList" title="불릿 목록">• 목록</button>
+        
+        <button data-cmd="setParagraph" title="본문">본문</button>
+        <button data-cmd="toggleBlockquote" title="인용">인용</button>
+        <button data-cmd="toggleCodeBlock" title="코드블록">코드블록</button>
+        <button data-cmd="setHorizontalRule" title="구분선">구분선</button>
+        <button data-cmd="undo" title="되돌리기 (Ctrl+Z)">↶</button>
+        <button data-cmd="redo" title="다시실행 (Ctrl+Y / Ctrl+Shift+Z)">↷</button>
+        <span style="margin-left:8px">정렬:</span>
+        <button data-cmd="align" data-align="left" title="왼쪽 정렬">⟸</button>
+        <button data-cmd="align" data-align="center" title="가운데 정렬">⇔</button>
+        <button data-cmd="align" data-align="right" title="오른쪽 정렬">⟹</button>
+        <span style="margin-left:8px">색:</span>
+        <input type="color" id="colorPicker" title="텍스트 색상" />
+        <span>형광펜:</span>
+        <input type="color" id="hlPicker" title="하이라이트 색상" />
+        <input type="file" id="imgFile" accept="image/*" style="display:none;" />
+        <button onclick="document.getElementById('imgFile').click()" title="이미지 업로드">이미지</button>
+        <button onclick="insertYouTube()" title="YouTube 임베드">YouTube</button>
+      </div>
+      <div id="editor" class="editor"></div>
+    </main>
+  </div>
+
+  <script>
+        // Open by token
+        // 편집 기능 제거로 토큰 열기 핸들러 삭제
+    // Ensure CSRF cookie is set by forcing token render once
+    (function ensureCsrf(){ const f=document.createElement('form'); f.innerHTML=`{% csrf_token %}`; document.body.appendChild(f); setTimeout(()=>f.remove(),0); })();
+    // Pass initial server content to TipTap
+    window.__INITIAL_HTML__ = "{{ initial_html|default:''|escapejs }}";
+    // If server-provided initial content is the placeholder, strip it
+    (function(){
+      const phTexts = [
+        '메모를 입력하세요',
+        '메모를 입력하세요...',
+        '<p>메모를 입력하세요</p>',
+        '<p>메모를 입력하세요...</p>'
+      ];
+      const norm = (s)=> (s||'').replace(/\s+/g,'').toLowerCase();
+      if (phTexts.map(t=>norm(t)).includes(norm(window.__INITIAL_HTML__))) {
+        window.__INITIAL_HTML__ = '';
+      }
+      // Also clear any pre-rendered editor innerHTML that is just the placeholder
+      const ed = document.getElementById('editor');
+      if (ed && phTexts.map(t=>norm(t)).includes(norm(ed.innerHTML))) {
+        ed.innerHTML = '';
+      }
+      // If no existing note and no initial HTML, ensure editor starts empty
+      const hasNote = !!("{{ note_id|default:''|escapejs }}" || '').trim();
+      if (!hasNote && !window.__INITIAL_HTML__) {
+        const el = document.getElementById('editor');
+        if (el) el.innerHTML = '';
+      }
+    })();
+    window.__NOTE_ID__ = "{{ note_id|default:''|escapejs }}" || null;
+    // Prefill title when editing
+    (function prefillTitle(){
+      const t = "{{ title|default:''|escapejs }}";
+      if (t) { const el=document.getElementById('title'); if(el) el.value = t; }
+    })();
+    // Title Tab key: move focus to editor
+    (function titleTabToEditor(){
+      const titleEl = document.getElementById('title');
+      if (!titleEl) return;
+      titleEl.addEventListener('keydown', (e)=>{
+        if (e.key === 'Tab'){
+          e.preventDefault();
+          try {
+            if (window.__tiptap && typeof window.__tiptap.commands.focus === 'function') {
+              window.__tiptap.commands.focus();
+            } else {
+              const edRoot = document.querySelector('.tiptap') || document.getElementById('editor');
+              edRoot && edRoot.focus();
+            }
+          } catch(_) {}
+        }
+      });
+    })();
+    // Theme toggle
+    (function initTheme(){
+      const pref = localStorage.getItem('bano-theme') || 'dark';
+      if (pref === 'light') document.documentElement.classList.add('light');
+      document.getElementById('themeToggle').addEventListener('click', ()=>{
+        document.documentElement.classList.toggle('light');
+        const isLight = document.documentElement.classList.contains('light');
+        localStorage.setItem('bano-theme', isLight ? 'light' : 'dark');
+      });
+    })();
+
+    // OneNote-like timestamp
+    function updateTimestamp(){
+      const now = new Date();
+      const opts = { year:'numeric', month:'long', day:'numeric', weekday:'long', hour:'numeric', minute:'2-digit' };
+      document.getElementById('timestamp').textContent = new Intl.DateTimeFormat('ko-KR', opts).format(now);
+    }
+    updateTimestamp();
+
+    function cmd(){ /* TipTap handles formatting via toolbar */ }
+    function toContentJson(html){ return JSON.stringify({ type: 'html', html }); }
+
+    // Image upload
+    document.getElementById('imgFile').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/upload-image/', { method:'POST', body: form, headers: { 'X-CSRFToken': _getCsrfToken() } });
+      const data = await res.json();
+      if(res.ok){
+        const url = data.url;
+        if (window.__tiptap) window.__tiptap.commands.setImage({ src: url });
+      } else {
+        alert('이미지 업로드 실패: ' + (data.error || 'unknown'));
+      }
+      e.target.value = '';
+    });
+
+    let currentNoteId = window.__NOTE_ID__ || null;
+    async function saveNote(){
+      console.log('[Bano] saveNote clicked');
+      const title = document.getElementById('title').value || '제목 없음';
+      const html = window.getEditorHTML ? window.getEditorHTML() : document.getElementById('editor').innerHTML;
+      const content_json = toContentJson(html);
+      const form = new FormData();
+      form.append('title', title);
+      form.append('content_json', content_json);
+      if (currentNoteId) form.append('note_id', currentNoteId);
+      const res = await fetch('/save/', { method: 'POST', body: form, headers: { 'X-CSRFToken': getCsrf() } });
+      const data = await res.json();
+      if(res.ok){
+        currentNoteId = data.note_id;
+        document.getElementById('shareBtn').disabled = false;
+        console.log('[Bano] saved ok', data);
+        // Apply server-sanitized content directly
+        try {
+          if (data && data.content && data.content.type === 'html') {
+            if (window.__tiptap) window.__tiptap.commands.setContent(data.content.html, false);
+          }
+        } catch(e){ console.warn('[Bano] apply saved content failed', e); }
+      } else {
+        console.error('[Bano] save error', data);
+      }
+    }
+
+    async function createShare(){
+      console.log('[Bano] createShare clicked');
+      // 저장이 안되어 있으면 먼저 저장
+      if(!currentNoteId){ await saveNote(); }
+      if(!currentNoteId){ alert('저장에 실패했습니다.'); return; }
+      // Show custom dialog for optional view password
+      const dlg = document.getElementById('shareDialog');
+      const overlay = document.getElementById('modalOverlay');
+      const pwdRow = document.getElementById('pwdRow');
+      // Apply blur to content area while modal is open
+      try {
+        document.querySelector('.layout')?.classList.add('blurred');
+      } catch(e) {}
+      dlg.style.display = 'block';
+      overlay.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      pwdRow.style.display = 'none';
+      // Disable editor interactions while modal is open
+      try { if (window.__tiptap) window.__tiptap.setEditable(false); } catch(e) {}
+    }
+
+    // Dialog handlers
+    document.getElementById('dlgConfirm').addEventListener('click', ()=>{
+      const choiceRow = document.getElementById('choiceRow');
+      const pwdRow = document.getElementById('pwdRow');
+      if (choiceRow) choiceRow.style.display = 'none';
+      if (pwdRow) pwdRow.style.display = 'block';
+      const viewPwd = document.getElementById('viewPwd');
+      if (viewPwd) viewPwd.focus();
+    });
+    document.getElementById('dlgCancel').addEventListener('click', async ()=>{
+      // Always cancel share creation and close modal
+      const choiceRow = document.getElementById('choiceRow');
+      const pwdRow = document.getElementById('pwdRow');
+      const dlg = document.getElementById('shareDialog');
+      const overlay = document.getElementById('modalOverlay');
+      dlg.style.display = 'none';
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+      try { document.querySelector('.layout')?.classList.remove('blurred'); } catch(e) {}
+      try { if (window.__tiptap) window.__tiptap.setEditable(true); } catch(e) {}
+      // Reset to initial choice step for next open
+      if (pwdRow) pwdRow.style.display = 'none';
+      if (choiceRow) choiceRow.style.display = 'block';
+    });
+    document.getElementById('pwdApply').addEventListener('click', async ()=>{
+      const pw = (document.getElementById('viewPwd').value||'').trim();
+      await finalizeShare(pw);
+    });
+    document.getElementById('pwdBack').addEventListener('click', ()=>{
+      const choiceRow = document.getElementById('choiceRow');
+      const pwdRow = document.getElementById('pwdRow');
+      if (pwdRow) pwdRow.style.display = 'none';
+      if (choiceRow) choiceRow.style.display = 'block';
+    });
+
+    async function finalizeShare(viewPassword){
+      const form = new FormData();
+      form.append('note_id', currentNoteId);
+      // 현재 백엔드는 편집 비밀번호 필드만 제공하므로 임시로 동일 필드 사용
+      form.append('edit_password', viewPassword);
+      const res = await fetch('/s/create/', { method:'POST', body: form, headers: { 'X-CSRFToken': getCsrf() } });
+      const data = await res.json();
+      const dlg = document.getElementById('shareDialog');
+      const overlay = document.getElementById('modalOverlay');
+      dlg.style.display = 'none';
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+      // Remove blur from content area
+      try {
+        document.querySelector('.layout')?.classList.remove('blurred');
+      } catch(e) {}
+      // Re-enable editor interactions after modal closes
+      try { if (window.__tiptap) window.__tiptap.setEditable(true); } catch(e) {}
+      if(res.ok){
+        const shareUrl = `${location.origin}/s/${data.token}/`;
+        navigator.clipboard?.writeText(shareUrl).catch(()=>{});
+        const area = document.getElementById('shareResult');
+        area.style.display = 'block';
+        area.innerHTML = `생성된 링크: <a href="${shareUrl}" target="_blank">${shareUrl}</a><br/>`
+          + (currentNoteId ? `히스토리: <a href="/history/${currentNoteId}/" target="_blank">열람</a>` : '');
+        console.log('[Bano] share created', data.token);
+      } else {
+        console.error('[Bano] share error', data);
+      }
+    }
+
+    const shareBtnEl = document.getElementById('shareBtn');
+    shareBtnEl.disabled = false; // 항상 활성화 (새 메모는 클릭 시 저장 후 공유 생성)
+    shareBtnEl.addEventListener('click', createShare);
+    function updateHistoryLink(){
+      const a = document.getElementById('historyLink');
+      if(currentNoteId){ a.href = `/history/${currentNoteId}/`; a.style.display='inline-block'; }
+    }
+    updateHistoryLink();
+
+    // Enable share button if we already have a note id (editing existing)
+    if (currentNoteId) {
+      document.getElementById('shareBtn').disabled = false;
+    }
+
+    // TipTap toolbar wiring
+    const tb = document.getElementById('tiptapToolbar');
+    tb.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      const cmd = btn.dataset.cmd;
+      const ed = window.__tiptap;
+      if(!ed) return;
+      switch(cmd){
+        case 'toggleBold': ed.chain().focus().toggleBold().run(); break;
+        case 'toggleItalic': ed.chain().focus().toggleItalic().run(); break;
+        case 'toggleStrike': ed.chain().focus().toggleStrike().run(); break;
+        case 'toggleBulletList': ed.chain().focus().toggleBulletList().run(); break;
+        case 'toggleOrderedList': ed.chain().focus().toggleOrderedList().run(); break;
+        case 'setParagraph': ed.chain().focus().setParagraph().run(); break;
+        case 'toggleBlockquote': ed.chain().focus().toggleBlockquote().run(); break;
+        case 'toggleCodeBlock': ed.chain().focus().toggleCodeBlock().run(); break;
+        case 'setHorizontalRule': ed.chain().focus().setHorizontalRule().run(); break;
+        case 'undo': ed.commands.undo(); break;
+        case 'redo': ed.commands.redo(); break;
+        case 'align': {
+          const a = btn.dataset.align || 'left';
+          ed.chain().focus().setTextAlign(a).run();
+          break;
+        }
+      }
+      updateActiveStates();
+    });
+
+    function updateActiveStates(){
+      const ed = window.__tiptap; if(!ed) return;
+      tb.querySelectorAll('button').forEach(b=> b.classList.remove('active'));
+      if(ed.isActive('bold')) tb.querySelector('[data-cmd="toggleBold"]').classList.add('active');
+      if(ed.isActive('italic')) tb.querySelector('[data-cmd="toggleItalic"]').classList.add('active');
+      if(ed.isActive('strike')) tb.querySelector('[data-cmd="toggleStrike"]').classList.add('active');
+      if(ed.isActive('bulletList')) tb.querySelector('[data-cmd="toggleBulletList"]').classList.add('active');
+      if(ed.isActive('orderedList')) tb.querySelector('[data-cmd="toggleOrderedList"]').classList.add('active');
+      if(ed.isActive('blockquote')) tb.querySelector('[data-cmd="toggleBlockquote"]').classList.add('active');
+      if(ed.isActive('codeBlock')) tb.querySelector('[data-cmd="toggleCodeBlock"]').classList.add('active');
+      // heading 버튼 제거로 활성 상태 체크 생략
+      function isAligned(dir){
+        return ed.isActive('paragraph', { textAlign: dir }) || ed.isActive('heading', { textAlign: dir });
+      }
+      if(isAligned('left')) tb.querySelector('[data-align="left"]').classList.add('active');
+      if(isAligned('center')) tb.querySelector('[data-align="center"]').classList.add('active');
+      if(isAligned('right')) tb.querySelector('[data-align="right"]').classList.add('active');
+    }
+
+    const observe = setInterval(()=>{ if(window.__tiptap){
+      window.__tiptap.on('transaction', function(){ updateActiveStates(); });
+      window.__tiptap.on('selectionUpdate', function(){ updateActiveStates(); });
+      updateActiveStates();
+      // Placeholder logic removed
+      clearInterval(observe);
+    } }, 200);
+
+    // Placeholder logic removed
+
+    // Color pickers
+    const colorEl = document.getElementById('colorPicker');
+    const hlEl = document.getElementById('hlPicker');
+    colorEl?.addEventListener('input', ()=>{ const ed=window.__tiptap; if(!ed) return; ed.chain().focus().setColor(colorEl.value).run(); });
+    hlEl?.addEventListener('input', ()=>{ const ed=window.__tiptap; if(!ed) return; ed.chain().focus().setHighlight({ color: hlEl.value }).run(); });
+
+    // Font selectors
+    const ffSel = document.getElementById('fontFamilySelect');
+    const fsSel = document.getElementById('fontSizeSelect');
+    // Follow the same pattern as toggleBold: chain().focus().<command>().run()
+    ffSel?.addEventListener('change', ()=>{
+      const ed = window.__tiptap; if(!ed) return;
+      const val = ffSel.value;
+      if (val) ed.chain().focus().setTextStyle({ fontFamily: val }).run();
+      else ed.chain().focus().unsetTextStyle().run();
+    });
+    fsSel?.addEventListener('change', ()=>{
+      const ed = window.__tiptap; if(!ed) return;
+      const val = fsSel.value;
+      if (val) ed.chain().focus().setTextStyle({ fontSize: val }).run();
+      else ed.chain().focus().unsetTextStyle().run();
+    });
+
+    // Local CSRF getter to avoid module load timing issues
+    function getCsrf(){
+      const m = document.cookie.match(/csrftoken=([^;]+)/);
+      return m ? m[1] : '';
+    }
+  </script>
+  {% include 'notes/_editor_script_tiptap.html' %}
+</body>
+</html>

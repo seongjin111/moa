@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>노트 목록</title>
+  <link rel="stylesheet" href="/static/css/theme.css" />
+  <style> table { width:100%; border-collapse: collapse; } th, td { border-bottom:1px solid var(--border); padding:8px; } a.btn { padding:4px 8px; border:1px solid var(--border); border-radius:6px; } </style>
+</head>
+<body>
+  <div class="appbar"><div class="title">노트 목록</div><div style="flex:1"></div><a href="/adminpanel/">대시보드</a></div>
+  <main class="editor-wrap">
+    <table>
+      <thead><tr><th>note_id</th><th>제목</th><th>상태</th><th>생성시각</th><th>수정시각</th><th>조치</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.note_id }}</td>
+          <td>{{ r.title }}</td>
+          <td>{{ r.status }}</td>
+          <td>{{ r.created_at }}</td>
+          <td>{{ r.updated_at }}</td>
+          <td>
+            <a class="btn" href="/edit/{{ r.note_id }}/">편집</a>
+            <a class="btn" href="/adminpanel/notes/{{ r.note_id }}/history/">히스토리</a>
+            <a class="btn" href="/adminpanel/notes/{{ r.note_id }}/expire/">만료</a>
+            <a class="btn" href="/adminpanel/notes/{{ r.note_id }}/delete/">삭제</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>
