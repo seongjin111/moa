@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bano 에디터 - 원노트 스타일</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f5f5f5;
+      overflow: hidden;
+      height: 100vh;
+    }
+    
+    /* 앱바 */
+    .appbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: #0078d4;
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .appbar .title {
+      font-weight: 600;
+      font-size: 16px;
+      margin-right: 24px;
+    }
+    
+    .appbar button {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+    
+    .appbar button:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    
+    /* 사이드바 - 원노트 스타일 */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 48px;
+      bottom: 0;
+      width: 280px;
+      background: #f3f3f3;
+      border-right: 1px solid #e0e0e0;
+      overflow-y: auto;
+      z-index: 100;
+    }
+    
+    .notebook-section {
+      padding: 8px 0;
+    }
+    
+    .notebook-title {
+      padding: 8px 16px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .notebook-title:hover {
+      background: #e8e8e8;
+    }
+    
+    .notebook-title::before {
+      content: '📓';
+      margin-right: 8px;
+    }
+    
+    .section-list {
+      padding-left: 16px;
+    }
+    
+    .section-item {
+      padding: 6px 16px;
+      font-size: 13px;
+      color: #666;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    
+    .section-item:hover {
+      background: #e8e8e8;
+    }
+    
+    .section-item::before {
+      content: '📑';
+      margin-right: 8px;
+    }
+    
+    .section-item.active {
+      background: #e3f2fd;
+      color: #1976d2;
+      font-weight: 500;
+    }
+    
+    .page-list {
+      padding-left: 32px;
+    }
+    
+    .page-item {
+      padding: 4px 16px;
+      font-size: 12px;
+      color: #888;
+      cursor: pointer;
+    }
+    
+    .page-item:hover {
+      background: #f0f0f0;
+    }
+    
+    .page-item.active {
+      color: #1976d2;
+      font-weight: 500;
+    }
+    
+    /* 메인 캔버스 영역 */
+    .canvas-container {
+      position: fixed;
+      left: 280px;
+      top: 48px;
+      right: 0;
+      bottom: 0;
+      overflow: auto;
+      background: #fafafa;
+      background-image: 
+        linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.02) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    
+    .canvas {
+      position: relative;
+      width: 816px; /* A4 너비 */
+      min-height: 1056px; /* A4 높이 */
+      margin: 40px auto;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 40px;
+    }
+    
+    /* 페이지 헤더 */
+    .page-header {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .page-title {
+      font-size: 24px;
+      font-weight: 300;
+      border: none;
+      outline: none;
+      width: 100%;
+      padding: 8px 0;
+      color: #333;
+    }
+    
+    /* 자유 배치 요소 */
+    .canvas-element {
+      position: absolute;
+      cursor: move;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+    }
+    
+    .canvas-element:hover {
+      border-color: #0078d4;
+    }
+    
+    .canvas-element.selected {
+      border-color: #0078d4;
+      box-shadow: 0 0 0 2px rgba(0,120,212,0.2);
+    }
+    
+    /* 텍스트 박스 */
+    .textbox-element {
+      min-width: 200px;
+      min-height: 50px;
+      padding: 8px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      outline: none;
+      font-size: 14px;
+      line-height: 1.5;
+      resize: both;
+      overflow: hidden;
+    }
+    
+    /* 이미지 요소 */
+    .image-element {
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .image-element img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    
+    /* 그리기 요소 */
+    .drawing-element {
+      border-radius: 4px;
+      pointer-events: none;
+    }
+    
+    .drawing-element canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* 그리기 모드 */
+    .draw-mode.active {
+      background: #0078d4;
+      color: white;
+    }
+    
+    .erase-mode.active {
+      background: #d32f2f;
+      color: white;
+    }
+    
+    .canvas.drawing-mode {
+      cursor: crosshair;
+    }
+    
+    .canvas.erase-mode {
+      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><circle cx="12" cy="12" r="8" fill="none" stroke="red" stroke-width="2"/></svg>') 12 12, auto;
+    }
+    
+    /* 그리기 영역은 항상 통과 */
+    .drawing-element {
+      pointer-events: none;
+      z-index: 0; /* 다른 요소보다 뒤에 */
+    }
+    
+    /* 그리기 모드일 때만 canvas가 이벤트 받기 */
+    .drawing-element canvas {
+      pointer-events: none; /* 기본적으로 통과 */
+    }
+    
+    .canvas.drawing-mode .drawing-element canvas,
+    .canvas.erase-mode .drawing-element canvas {
+      pointer-events: auto; /* 그리기/지우개 모드일 때만 이벤트 받기 */
+    }
+    
+    /* 이미지와 텍스트 요소는 항상 앞에 */
+    .image-element,
+    .textbox-element {
+      z-index: 10;
+      pointer-events: auto;
+    }
+    
+    /* 그리기/지우개 모드일 때는 이미지/텍스트 요소가 이벤트를 통과시켜야 함 */
+    .canvas.drawing-mode .image-element,
+    .canvas.erase-mode .image-element {
+      pointer-events: auto; /* 요소 자체는 클릭 가능 (드래그 등) */
+    }
+    
+    .canvas.drawing-mode .image-element img,
+    .canvas.erase-mode .image-element img {
+      pointer-events: none; /* 이미지 내부는 통과 */
+    }
+    
+    .canvas.drawing-mode .textbox-element,
+    .canvas.erase-mode .textbox-element {
+      pointer-events: auto; /* 텍스트 박스는 클릭 가능 */
+    }
+    
+    /* 그리기 모드일 때 그리기 영역이 앞에 오도록 */
+    .canvas.drawing-mode .drawing-element,
+    .canvas.erase-mode .drawing-element {
+      z-index: 5; /* 이미지보다는 낮지만 기본보다는 높음 */
+    }
+    
+    /* 리사이즈 핸들 */
+    .resize-handle {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #0078d4;
+      border: 2px solid white;
+      border-radius: 50%;
+      bottom: -6px;
+      right: -6px;
+      cursor: nwse-resize;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: auto !important;
+      z-index: 1000;
+    }
+    
+    .canvas-element:hover .resize-handle,
+    .canvas-element.selected .resize-handle {
+      opacity: 1;
+    }
+    
+    /* 이미지 요소는 선택 시 리사이즈 핸들 항상 표시 */
+    .image-element.selected .resize-handle {
+      opacity: 1;
+    }
+    
+    /* 툴바 */
+    .toolbar {
+      position: fixed;
+      top: 48px;
+      left: 280px;
+      right: 0;
+      height: 40px;
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 8px;
+      z-index: 99;
+    }
+    
+    .toolbar button {
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    
+    .toolbar button:hover {
+      background: #f5f5f5;
+    }
+    
+    .toolbar button.active {
+      background: #0078d4;
+      color: white;
+      border-color: #0078d4;
+    }
+    
+    /* 컨텍스트 메뉴 */
+    .context-menu {
+      position: fixed;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 4px 0;
+      z-index: 10000;
+      display: none;
+    }
+    
+    .context-menu-item {
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #333;
+    }
+    
+    .context-menu-item:hover {
+      background: #f5f5f5;
+    }
+  </style>
+</head>
+<body>
+  <!-- 앱바 -->
+  <div class="appbar">
+    <div class="title">Bano</div>
+    <button id="saveBtn">저장</button>
+    <button id="shareBtn" disabled>공유</button>
+    <div style="flex: 1;"></div>
+    <button id="themeToggle">모드전환</button>
+  </div>
+  
+  <!-- 사이드바 -->
+  <aside class="sidebar">
+    <div class="notebook-section">
+      <div class="notebook-title">
+        <span>내 노트북</span>
+        <span style="font-size: 12px;">+</span>
+      </div>
+      <div class="section-list">
+        <div class="section-item active">
+          일반
+        </div>
+        <div class="page-list">
+          <div class="page-item active" data-page-id="current">현재 페이지</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  
+  <!-- 툴바 -->
+  <div class="toolbar">
+    <button id="addTextBtn">텍스트 추가</button>
+    <button id="addImageBtn">이미지 추가</button>
+    <button id="drawBtn" class="draw-mode">✏️ 그리기</button>
+    <button id="eraseBtn" style="display: none;">🧹 지우개</button>
+    <div style="flex: 1;"></div>
+    <label id="penControls" style="display: flex; align-items: center; gap: 8px;">
+      <span>펜 크기:</span>
+      <input type="range" id="penSize" min="1" max="20" value="3" style="width: 100px;" />
+      <span id="penSizeValue">3px</span>
+    </label>
+    <label id="colorControls" style="display: flex; align-items: center; gap: 8px;">
+      <span>색상:</span>
+      <input type="color" id="penColor" value="#000000" style="width: 40px; height: 30px;" />
+    </label>
+    <button id="deleteBtn" disabled>삭제</button>
+    <button id="undoBtn">↶ 실행취소</button>
+    <button id="redoBtn">↷ 다시실행</button>
+  </div>
+  
+  <!-- 캔버스 영역 -->
+  <div class="canvas-container" id="canvasContainer">
+    <div class="canvas" id="canvas">
+      <div class="page-header">
+        <input type="text" class="page-title" id="pageTitle" placeholder="페이지 제목 없음" />
+      </div>
+      <!-- 요소들이 여기에 동적으로 추가됩니다 -->
+    </div>
+  </div>
+  
+  <!-- 컨텍스트 메뉴 -->
+  <div class="context-menu" id="contextMenu">
+    <div class="context-menu-item" data-action="cut">잘라내기</div>
+    <div class="context-menu-item" data-action="copy">복사</div>
+    <div class="context-menu-item" data-action="paste">붙여넣기</div>
+    <div class="context-menu-item" data-action="delete">삭제</div>
+  </div>
+  
+  <!-- 파일 입력 (숨김) -->
+  <input type="file" id="imageFileInput" accept="image/*" style="display: none;" />
+  
+  <script>
+    // 전역 상태
+    let elements = [];
+    let selectedElement = null;
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+    let currentNoteId = null;
+    let history = [];
+    let historyIndex = -1;
+    
+    // 그리기 상태
+    let isDrawingMode = false;
+    let isEraseMode = false;
+    let isDrawing = false;
+    let currentDrawing = null;
+    let drawingPath = [];
+    let penSize = 3;
+    let penColor = '#000000';
+    let mainDrawingElement = null; // 메인 그리기 영역 (하나만 유지)
+    // 이벤트 리스너 참조 (제거를 위해 저장)
+    let drawingMoveHandler = null;
+    let drawingUpHandler = null;
+    
+    // 요소 ID 생성기
+    function generateId() {
+      return 'elem_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    // 텍스트 박스 추가
+    function addTextbox(x = 100, y = 100) {
+      const id = generateId();
+      const element = {
+        id,
+        type: 'textbox',
+        x,
+        y,
+        width: 300,
+        height: 100,
+        content: '',
+        style: {
+          fontSize: '14px',
+          fontFamily: 'Segoe UI',
+          color: '#333'
+        }
+      };
+      
+      elements.push(element);
+      renderElement(element);
+      selectElement(id);
+      saveState();
+      return element;
+    }
+    
+    // 이미지 추가
+    function addImage(src, x = 100, y = 100, width = 300, height = 200) {
+      const id = generateId();
+      const element = {
+        id,
+        type: 'image',
+        x,
+        y,
+        width,
+        height,
+        src
+      };
+      
+      elements.push(element);
+      renderElement(element);
+      selectElement(id);
+      saveState();
+      return element;
+    }
+    
+    // 그리기 요소 추가 (메인 그리기 영역 - 하나만 유지)
+    function addDrawing(x = 100, y = 100, width = 816, height = 1000) {
+      // 기존 메인 그리기 영역이 있으면 제거
+      if (mainDrawingElement) {
+        const index = elements.findIndex(el => el.id === mainDrawingElement.id);
+        if (index > -1) {
+          elements.splice(index, 1);
+          const elemDiv = document.getElementById(mainDrawingElement.id);
+          if (elemDiv) elemDiv.remove();
+        }
+      }
+      
+      const id = generateId();
+      const element = {
+        id,
+        type: 'drawing',
+        x: 0, // 캔버스 전체를 덮도록
+        y: 0,
+        width: 816, // 캔버스 전체 너비
+        height: 1000, // 충분한 높이
+        paths: [] // 그리기 경로들
+      };
+      
+      elements.push(element);
+      mainDrawingElement = element;
+      renderElement(element);
+      saveState();
+      return element;
+    }
+    
+    // 메인 그리기 영역 가져오기 또는 생성
+    function getOrCreateMainDrawing() {
+      if (!mainDrawingElement) {
+        // 기존 그리기 요소 찾기
+        const existingDrawing = elements.find(el => el.type === 'drawing');
+        if (existingDrawing) {
+          mainDrawingElement = existingDrawing;
+          return existingDrawing;
+        }
+        // 없으면 새로 생성
+        return addDrawing();
+      }
+      return mainDrawingElement;
+    }
+    
+    // 그리기 시작
+    function startDrawing(e) {
+      if (!isDrawingMode && !isEraseMode) {
+        console.log('startDrawing: 그리기/지우개 모드가 아님');
+        return;
+      }
+      
+      // 이미 그리기 중이면 무시
+      if (isDrawing) {
+        console.log('startDrawing: 이미 그리기 중');
+        return;
+      }
+      
+      console.log('startDrawing 호출됨, isDrawingMode:', isDrawingMode, 'isEraseMode:', isEraseMode);
+      
+      const drawingElement = getOrCreateMainDrawing();
+      if (!drawingElement) {
+        console.error('startDrawing: 그리기 요소를 찾을 수 없음');
+        return;
+      }
+      
+      currentDrawing = drawingElement;
+      isDrawing = true;
+      drawingPath = []; // 경로 초기화
+      
+      const canvas = document.getElementById('canvas');
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const relativeX = x - drawingElement.x;
+      const relativeY = y - drawingElement.y;
+      
+      if (isEraseMode) {
+        // 지우개 모드: 해당 위치의 경로 삭제
+        eraseAtPoint(relativeX, relativeY, drawingElement);
+      } else {
+        // 그리기 모드: 새 경로 시작
+        drawingPath = [{ x: relativeX, y: relativeY }];
+      }
+      
+      // 기존 리스너 제거 (안전을 위해)
+      cleanupDrawingListeners();
+      
+      // 새 리스너 추가
+      drawingMoveHandler = (e) => {
+        console.log('mousemove 이벤트 발생, onDrawing 호출');
+        onDrawing(e);
+      };
+      drawingUpHandler = stopDrawing;
+      document.addEventListener('mousemove', drawingMoveHandler, { passive: false });
+      document.addEventListener('mouseup', drawingUpHandler, { passive: false });
+      
+      console.log('이벤트 리스너 추가 완료, isDrawing:', isDrawing, 'drawingMoveHandler:', !!drawingMoveHandler);
+    }
+    
+    // 지우개 기능: 특정 위치의 경로 삭제 (순서 무관)
+    function eraseAtPoint(x, y, drawingElement) {
+      const eraseRadius = penSize * 3; // 지우개 반경을 더 크게
+      const canvasEl = document.querySelector(`#${drawingElement.id} canvas`);
+      if (!canvasEl) return;
+      
+      // 지우개 영역에 닿는 모든 경로를 찾아서 삭제
+      // 순서와 상관없이 모든 경로를 체크
+      const pathsToRemove = [];
+      
+      drawingElement.paths.forEach((path, index) => {
+        if (!path.points || path.points.length === 0) return;
+        
+        // 경로의 모든 점을 체크해서 지우개 영역과 겹치는지 확인
+        const hasPointInRadius = path.points.some(point => {
+          const dx = point.x - x;
+          const dy = point.y - y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          return distance < eraseRadius;
+        });
+        
+        // 또는 경로의 선분이 지우개 영역과 교차하는지 확인
+        let intersects = false;
+        if (!hasPointInRadius && path.points.length > 1) {
+          for (let i = 0; i < path.points.length - 1; i++) {
+            const p1 = path.points[i];
+            const p2 = path.points[i + 1];
+            
+            // 선분과 원의 교차 확인 (간단한 거리 체크)
+            const distToLine = distanceToLineSegment(x, y, p1.x, p1.y, p2.x, p2.y);
+            if (distToLine < eraseRadius) {
+              intersects = true;
+              break;
+            }
+          }
+        }
+        
+        if (hasPointInRadius || intersects) {
+          pathsToRemove.push(index);
+        }
+      });
+      
+      // 역순으로 삭제 (인덱스가 변경되지 않도록)
+      pathsToRemove.reverse().forEach(index => {
+        drawingElement.paths.splice(index, 1);
+      });
+      
+      // 캔버스 다시 그리기
+      redrawCanvas(drawingElement);
+    }
+    
+    // 점에서 선분까지의 최단 거리 계산
+    function distanceToLineSegment(px, py, x1, y1, x2, y2) {
+      const A = px - x1;
+      const B = py - y1;
+      const C = x2 - x1;
+      const D = y2 - y1;
+      
+      const dot = A * C + B * D;
+      const lenSq = C * C + D * D;
+      let param = -1;
+      
+      if (lenSq != 0) {
+        param = dot / lenSq;
+      }
+      
+      let xx, yy;
+      
+      if (param < 0) {
+        xx = x1;
+        yy = y1;
+      } else if (param > 1) {
+        xx = x2;
+        yy = y2;
+      } else {
+        xx = x1 + param * C;
+        yy = y1 + param * D;
+      }
+      
+      const dx = px - xx;
+      const dy = py - yy;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    // 캔버스 다시 그리기
+    function redrawCanvas(drawingElement) {
+      const canvasEl = document.querySelector(`#${drawingElement.id} canvas`);
+      if (!canvasEl) return;
+      
+      const ctx = canvasEl.getContext('2d');
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+      
+      if (drawingElement.paths && drawingElement.paths.length > 0) {
+        drawingElement.paths.forEach(path => {
+          if (path.points && path.points.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(path.points[0].x, path.points[0].y);
+            for (let i = 1; i < path.points.length; i++) {
+              ctx.lineTo(path.points[i].x, path.points[i].y);
+            }
+            ctx.strokeStyle = path.color || '#000000';
+            ctx.lineWidth = path.size || 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+          }
+        });
+      }
+    }
+    
+    // 그리기 중
+    function onDrawing(e) {
+      if (!isDrawing || !currentDrawing) {
+        console.log('onDrawing: 조건 불만족', { isDrawing, currentDrawing: !!currentDrawing });
+        return;
+      }
+      
+      const canvas = document.getElementById('canvas');
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const drawingElement = elements.find(el => el.id === currentDrawing.id);
+      if (!drawingElement) {
+        console.error('onDrawing: 그리기 요소를 찾을 수 없음');
+        return;
+      }
+      
+      const relativeX = x - drawingElement.x;
+      const relativeY = y - drawingElement.y;
+      
+      if (isEraseMode) {
+        // 지우개 모드: 계속 지우기 (순서 무관하게 모든 경로 체크)
+        eraseAtPoint(relativeX, relativeY, drawingElement);
+      } else {
+        // 그리기 모드: 경로 추가
+        drawingPath.push({ x: relativeX, y: relativeY });
+        
+        // 실시간 그리기
+        const canvasEl = document.querySelector(`#${currentDrawing.id} canvas`);
+        if (canvasEl) {
+          const ctx = canvasEl.getContext('2d');
+          const lastPoint = drawingPath[drawingPath.length - 2];
+          const currentPoint = drawingPath[drawingPath.length - 1];
+          
+          if (lastPoint) {
+            ctx.beginPath();
+            ctx.moveTo(lastPoint.x, lastPoint.y);
+            ctx.lineTo(currentPoint.x, currentPoint.y);
+            ctx.strokeStyle = penColor;
+            ctx.lineWidth = penSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+          }
+        } else {
+          console.error('onDrawing: canvas 요소를 찾을 수 없음', currentDrawing.id);
+        }
+      }
+    }
+    
+    // 그리기 리스너 정리 함수
+    function cleanupDrawingListeners() {
+      console.log('cleanupDrawingListeners 호출됨');
+      
+      if (drawingMoveHandler) {
+        document.removeEventListener('mousemove', drawingMoveHandler);
+        console.log('drawingMoveHandler 제거됨');
+        drawingMoveHandler = null;
+      }
+      if (drawingUpHandler) {
+        document.removeEventListener('mouseup', drawingUpHandler);
+        console.log('drawingUpHandler 제거됨');
+        drawingUpHandler = null;
+      }
+      // 안전을 위해 직접 추가된 리스너도 제거
+      document.removeEventListener('mousemove', onDrawing);
+      document.removeEventListener('mouseup', stopDrawing);
+    }
+    
+    // 그리기 종료
+    function stopDrawing(e) {
+      if (!isDrawing) {
+        console.log('stopDrawing: 이미 그리기 중이 아님');
+        return;
+      }
+      
+      console.log('stopDrawing 호출됨, drawingPath.length:', drawingPath.length);
+      
+      const drawingElement = elements.find(el => el.id === currentDrawing?.id);
+      if (drawingElement && drawingPath.length > 0 && !isEraseMode) {
+        // 그리기 모드일 때만 경로 저장
+        drawingElement.paths.push({
+          points: [...drawingPath],
+          color: penColor,
+          size: penSize
+        });
+        drawingPath = [];
+        saveState();
+        console.log('경로 저장 완료, paths 개수:', drawingElement.paths.length);
+      }
+      
+      // 상태 초기화 (currentDrawing은 유지 - 다음 그리기를 위해)
+      isDrawing = false;
+      drawingPath = [];
+      
+      console.log('상태 초기화 완료, isDrawing:', isDrawing);
+      
+      // 이벤트 리스너 제거
+      cleanupDrawingListeners();
+      
+      console.log('이벤트 리스너 제거 완료');
+    }
+    
+    // 요소 렌더링
+    function renderElement(element) {
+      const canvas = document.getElementById('canvas');
+      let elemDiv = document.getElementById(element.id);
+      const isNewElement = !elemDiv;
+      
+      if (!elemDiv) {
+        elemDiv = document.createElement('div');
+        elemDiv.id = element.id;
+        elemDiv.className = 'canvas-element';
+        canvas.appendChild(elemDiv);
+      }
+      
+      elemDiv.style.left = element.x + 'px';
+      elemDiv.style.top = element.y + 'px';
+      elemDiv.style.width = element.width + 'px';
+      elemDiv.style.height = element.height + 'px';
+      
+      if (element.type === 'textbox') {
+        elemDiv.className = 'canvas-element textbox-element';
+        elemDiv.contentEditable = true;
+        elemDiv.innerHTML = element.content || '';
+        elemDiv.style.fontSize = element.style.fontSize;
+        elemDiv.style.fontFamily = element.style.fontFamily;
+        elemDiv.style.color = element.style.color;
+        
+        // 이벤트 리스너는 한 번만 추가
+        if (isNewElement) {
+          elemDiv.addEventListener('input', () => {
+            element.content = elemDiv.innerHTML;
+            saveState();
+          });
+          
+          // 텍스트 박스 드래그 이벤트
+          elemDiv.addEventListener('mousedown', (e) => {
+            if (isDrawingMode || isEraseMode) {
+              // 그리기/지우개 모드에서는 텍스트 박스 위에서도 그리기/지우기 가능
+              e.preventDefault();
+              e.stopPropagation();
+              
+              // 이미 그리기 중이면 무시
+              if (isDrawing) {
+                return;
+              }
+              
+              // startDrawing 함수 사용 (일관성 유지)
+              startDrawing(e);
+              return;
+            }
+            
+            // 일반 모드: 텍스트 박스 드래그
+            selectElement(element.id);
+            startDrag(e, element);
+          });
+        }
+      } else if (element.type === 'image') {
+        elemDiv.className = 'canvas-element image-element';
+        
+        // 이미지 요소 내용 업데이트
+        let imgEl = elemDiv.querySelector('img');
+        if (!imgEl) {
+          elemDiv.innerHTML = `<img src="${element.src}" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />`;
+          imgEl = elemDiv.querySelector('img');
+        } else {
+          imgEl.src = element.src;
+        }
+        
+        // 리사이즈 핸들 확인 및 추가
+        if (!elemDiv.querySelector('.resize-handle')) {
+          elemDiv.appendChild(createResizeHandle(element));
+        }
+        
+        // 이벤트 리스너는 한 번만 추가
+        if (isNewElement) {
+          // 이미지 요소 드래그 이벤트
+          elemDiv.addEventListener('mousedown', (e) => {
+            console.log('이미지 요소 mousedown:', {
+              target: e.target.className,
+              isResizeHandle: e.target.classList.contains('resize-handle'),
+              isDrawingMode: isDrawingMode,
+              isEraseMode: isEraseMode
+            });
+            
+            if (e.target.classList.contains('resize-handle')) {
+              console.log('리사이즈 핸들 클릭');
+              return; // 리사이즈 핸들의 이벤트 핸들러가 처리
+            }
+            
+            if (isDrawingMode || isEraseMode) {
+              // 그리기/지우개 모드: 이미지 위에서도 그리기/지우기 가능
+              e.preventDefault();
+              e.stopPropagation();
+              
+              // 이미 그리기 중이면 무시
+              if (isDrawing) {
+                console.log('이미지: 이미 그리기 중');
+                return;
+              }
+              
+              // startDrawing 함수 사용 (일관성 유지)
+              startDrawing(e);
+              return;
+            }
+            
+            // 일반 모드: 이미지 드래그
+            console.log('이미지 드래그 시작');
+            e.stopPropagation(); // 다른 이벤트와 충돌 방지
+            selectElement(element.id);
+            startDrag(e, element);
+          });
+        }
+      } else if (element.type === 'drawing') {
+        elemDiv.className = 'canvas-element drawing-element';
+        const canvas = document.createElement('canvas');
+        canvas.width = element.width;
+        canvas.height = element.height;
+        canvas.style.width = element.width + 'px';
+        canvas.style.height = element.height + 'px';
+        elemDiv.appendChild(canvas);
+        elemDiv.appendChild(createResizeHandle(element));
+        
+        // 저장된 경로 다시 그리기
+        redrawCanvas(element);
+        
+        // 그리기 영역의 canvas에서도 클릭 이벤트 처리 (새로 생성된 경우만)
+        if (isNewElement) {
+          canvas.addEventListener('mousedown', (e) => {
+            console.log('그리기 영역 canvas mousedown:', {
+              isDrawingMode: isDrawingMode,
+              isEraseMode: isEraseMode,
+              isDrawing: isDrawing,
+              target: e.target
+            });
+            
+            // 이미지나 텍스트 요소 위를 클릭한 경우는 통과
+            const clickedElement = e.target.closest('.image-element, .textbox-element');
+            if (clickedElement) {
+              console.log('이미지/텍스트 요소 위 클릭, 통과');
+              return;
+            }
+            
+            if (isDrawingMode || isEraseMode) {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              // 이미 그리기 중이면 무시
+              if (isDrawing) {
+                console.log('그리기 영역: 이미 그리기 중');
+                return;
+              }
+              
+              // startDrawing 함수 사용
+              startDrawing(e);
+            }
+          });
+        }
+      }
+    }
+    
+    // 리사이즈 핸들 생성
+    function createResizeHandle(element) {
+      const handle = document.createElement('div');
+      handle.className = 'resize-handle';
+      handle.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        startResize(e, element);
+      });
+      return handle;
+    }
+    
+    // 요소 선택
+    function selectElement(id) {
+      // 기존 선택 해제
+      document.querySelectorAll('.canvas-element').forEach(el => {
+        el.classList.remove('selected');
+      });
+      
+      selectedElement = elements.find(el => el.id === id);
+      if (selectedElement) {
+        const elemDiv = document.getElementById(id);
+        if (elemDiv) {
+          elemDiv.classList.add('selected');
+        }
+        document.getElementById('deleteBtn').disabled = false;
+      } else {
+        document.getElementById('deleteBtn').disabled = true;
+      }
+    }
+    
+    // 드래그 시작
+    function startDrag(e, element) {
+      // 그리기/지우개 모드에서는 일반 요소 드래그 불가
+      if (isDrawingMode || isEraseMode) {
+        if (element.type === 'drawing') {
+          // 그리기 영역만 그리기/지우기 시작
+          currentDrawing = element;
+          startDrawing(e);
+        }
+        return;
+      }
+      
+      // 일반 모드: 요소 드래그
+      if (element.type === 'drawing') {
+        // 그리기 영역은 드래그 불가
+        return;
+      }
+      
+      isDragging = true;
+      const rect = document.getElementById('canvas').getBoundingClientRect();
+      dragOffset.x = e.clientX - rect.left - element.x;
+      dragOffset.y = e.clientY - rect.top - element.y;
+      
+      document.addEventListener('mousemove', onDrag);
+      document.addEventListener('mouseup', stopDrag);
+    }
+    
+    // 드래그 중
+    function onDrag(e) {
+      if (!isDragging || !selectedElement) return;
+      
+      const canvas = document.getElementById('canvas');
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left - dragOffset.x;
+      const y = e.clientY - rect.top - dragOffset.y;
+      
+      selectedElement.x = Math.max(0, x);
+      selectedElement.y = Math.max(0, y);
+      
+      const elemDiv = document.getElementById(selectedElement.id);
+      if (elemDiv) {
+        elemDiv.style.left = selectedElement.x + 'px';
+        elemDiv.style.top = selectedElement.y + 'px';
+      }
+    }
+    
+    // 드래그 종료
+    function stopDrag() {
+      isDragging = false;
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', stopDrag);
+      saveState();
+    }
+    
+    // 리사이즈 시작
+    function startResize(e, element) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // 그리기/지우개 모드에서는 리사이즈 불가
+      if (isDrawingMode || isEraseMode) {
+        return;
+      }
+      
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startWidth = element.width;
+      const startHeight = element.height;
+      
+      function onResize(e) {
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        element.width = Math.max(50, startWidth + deltaX);
+        element.height = Math.max(50, startHeight + deltaY);
+        
+        const elemDiv = document.getElementById(element.id);
+        if (elemDiv) {
+          elemDiv.style.width = element.width + 'px';
+          elemDiv.style.height = element.height + 'px';
+          
+          // 그리기 요소인 경우 캔버스 크기도 조정
+          if (element.type === 'drawing') {
+            const canvasEl = elemDiv.querySelector('canvas');
+            if (canvasEl) {
+              canvasEl.width = element.width;
+              canvasEl.height = element.height;
+              canvasEl.style.width = element.width + 'px';
+              canvasEl.style.height = element.height + 'px';
+              redrawCanvas(element);
+            }
+          }
+        }
+      }
+      
+      function stopResize() {
+        document.removeEventListener('mousemove', onResize);
+        document.removeEventListener('mouseup', stopResize);
+        saveState();
+      }
+      
+      document.addEventListener('mousemove', onResize);
+      document.addEventListener('mouseup', stopResize);
+    }
+    
+    // 캔버스 클릭 시 선택 해제 또는 그리기 시작
+    document.getElementById('canvas').addEventListener('mousedown', (e) => {
+      console.log('캔버스 mousedown 이벤트:', {
+        target: e.target.id,
+        targetClass: e.target.className,
+        isDrawingMode: isDrawingMode,
+        isEraseMode: isEraseMode,
+        isDrawing: isDrawing
+      });
+      
+      // 리사이즈 핸들은 제외
+      if (e.target.classList.contains('resize-handle')) {
+        console.log('리사이즈 핸들 클릭, 무시');
+        return;
+      }
+      
+      // 이미지나 텍스트 요소를 직접 클릭한 경우는 각 요소의 이벤트에서 처리
+      const clickedElement = e.target.closest('.canvas-element');
+      if (clickedElement && !clickedElement.classList.contains('drawing-element')) {
+        console.log('이미지/텍스트 요소 클릭, 요소의 이벤트 핸들러로 전달');
+        // 그리기/지우개 모드가 아니면 요소의 이벤트 핸들러가 처리하도록
+        if (!isDrawingMode && !isEraseMode) {
+          return;
+        }
+        // 그리기/지우개 모드면 이벤트를 통과시켜 그리기 영역으로 전달
+      }
+      
+      if (e.target.id === 'canvas' || e.target.classList.contains('page-header') || e.target.classList.contains('page-title') || (clickedElement && clickedElement.classList.contains('drawing-element'))) {
+        if (isDrawingMode || isEraseMode) {
+          console.log('캔버스에서 그리기/지우개 모드 시작');
+          // 그리기/지우개 모드: 메인 그리기 영역 사용 (새로 생성하지 않음)
+          startDrawing(e);
+        } else {
+          // 일반 모드: 선택 해제
+          document.querySelectorAll('.canvas-element').forEach(el => {
+            el.classList.remove('selected');
+          });
+          selectedElement = null;
+          document.getElementById('deleteBtn').disabled = true;
+        }
+      }
+    });
+    
+    // 상태 저장 (히스토리)
+    function saveState() {
+      const state = JSON.parse(JSON.stringify(elements));
+      history = history.slice(0, historyIndex + 1);
+      history.push(state);
+      historyIndex = history.length - 1;
+      
+      // 히스토리 제한 (최대 50개)
+      if (history.length > 50) {
+        history.shift();
+        historyIndex--;
+      }
+    }
+    
+    // 실행 취소
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        elements = JSON.parse(JSON.stringify(history[historyIndex]));
+        renderAll();
+      }
+    }
+    
+    // 다시 실행
+    function redo() {
+      if (historyIndex < history.length - 1) {
+        historyIndex++;
+        elements = JSON.parse(JSON.stringify(history[historyIndex]));
+        renderAll();
+      }
+    }
+    
+    // 모든 요소 렌더링
+    function renderAll() {
+      document.querySelectorAll('.canvas-element').forEach(el => el.remove());
+      elements.forEach(element => renderElement(element));
+    }
+    
+    // 노트 저장
+    async function saveNote() {
+      const title = document.getElementById('pageTitle').value || '제목 없음';
+      const canvasData = {
+        type: 'onenote_canvas',
+        canvas: {
+          width: 816,
+          height: document.getElementById('canvas').offsetHeight,
+          elements: elements
+        }
+      };
+      
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('content_json', JSON.stringify(canvasData));
+      if (currentNoteId) {
+        formData.append('note_id', currentNoteId);
+      }
+      
+      try {
+        const response = await fetch('/save/', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-CSRFToken': getCsrfToken()
+          }
+        });
+        
+        const data = await response.json();
+        if (data.note_id) {
+          currentNoteId = data.note_id;
+          document.getElementById('shareBtn').disabled = false;
+          alert('저장되었습니다!');
+        }
+      } catch (error) {
+        alert('저장 실패: ' + error.message);
+      }
+    }
+    
+    // CSRF 토큰 가져오기
+    function getCsrfToken() {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+          return value;
+        }
+      }
+      return '';
+    }
+    
+    // 이벤트 리스너 (DOM 로드 후 실행)
+    function initEventListeners() {
+      const addTextBtn = document.getElementById('addTextBtn');
+      const addImageBtn = document.getElementById('addImageBtn');
+      const imageFileInput = document.getElementById('imageFileInput');
+      const deleteBtn = document.getElementById('deleteBtn');
+      const drawBtn = document.getElementById('drawBtn');
+      const eraseBtn = document.getElementById('eraseBtn');
+      const penSizeEl = document.getElementById('penSize');
+      const penColorEl = document.getElementById('penColor');
+      const saveBtn = document.getElementById('saveBtn');
+      const undoBtn = document.getElementById('undoBtn');
+      const redoBtn = document.getElementById('redoBtn');
+      
+      if (!addTextBtn || !addImageBtn || !imageFileInput || !deleteBtn || !drawBtn || !eraseBtn || !penSizeEl || !penColorEl || !saveBtn || !undoBtn || !redoBtn) {
+        console.error('버튼 요소를 찾을 수 없습니다.');
+        return;
+      }
+      
+      addTextBtn.addEventListener('click', () => {
+        addTextbox(100, 150);
+      });
+      
+      addImageBtn.addEventListener('click', () => {
+        imageFileInput.click();
+      });
+      
+      imageFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+          const response = await fetch('/upload-image/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-CSRFToken': getCsrfToken()
+            }
+          });
+          
+          const data = await response.json();
+          if (data.url) {
+            addImage(data.url, 100, 150, 300, 200);
+          }
+        } catch (error) {
+          alert('이미지 업로드 실패: ' + error.message);
+        }
+        
+        e.target.value = '';
+      });
+      
+      deleteBtn.addEventListener('click', () => {
+        if (selectedElement) {
+          const index = elements.findIndex(el => el.id === selectedElement.id);
+          if (index > -1) {
+            elements.splice(index, 1);
+            document.getElementById(selectedElement.id).remove();
+            selectedElement = null;
+            deleteBtn.disabled = true;
+            saveState();
+          }
+        }
+      });
+      
+      // 그리기 모드 토글
+      drawBtn.addEventListener('click', () => {
+        isEraseMode = false; // 지우개 모드 해제
+        isDrawingMode = !isDrawingMode;
+        const canvas = document.getElementById('canvas');
+        const penControls = document.getElementById('penControls');
+        const colorControls = document.getElementById('colorControls');
+        
+        if (isDrawingMode) {
+          drawBtn.classList.add('active');
+          eraseBtn.classList.remove('active');
+          canvas.classList.add('drawing-mode');
+          canvas.classList.remove('erase-mode');
+          drawBtn.textContent = '✏️ 그리기 중';
+          eraseBtn.style.display = 'inline-block';
+          penControls.style.display = 'flex';
+          colorControls.style.display = 'flex';
+        } else {
+          drawBtn.classList.remove('active');
+          canvas.classList.remove('drawing-mode');
+          drawBtn.textContent = '✏️ 그리기';
+          currentDrawing = null;
+          if (!isEraseMode) {
+            eraseBtn.style.display = 'none';
+            penControls.style.display = 'none';
+            colorControls.style.display = 'none';
+          }
+        }
+      });
+      
+      // 지우개 모드 토글
+      eraseBtn.addEventListener('click', () => {
+        isDrawingMode = false; // 그리기 모드 해제
+        isEraseMode = !isEraseMode;
+        const canvas = document.getElementById('canvas');
+        const penControls = document.getElementById('penControls');
+        const colorControls = document.getElementById('colorControls');
+        
+        if (isEraseMode) {
+          eraseBtn.classList.add('active');
+          drawBtn.classList.remove('active');
+          canvas.classList.add('erase-mode');
+          canvas.classList.remove('drawing-mode');
+          eraseBtn.textContent = '🧹 지우개 중';
+          penControls.style.display = 'flex';
+          colorControls.style.display = 'none'; // 지우개 모드에서는 색상 불필요
+        } else {
+          eraseBtn.classList.remove('active');
+          canvas.classList.remove('erase-mode');
+          eraseBtn.textContent = '🧹 지우개';
+          currentDrawing = null;
+          if (!isDrawingMode) {
+            penControls.style.display = 'none';
+          }
+        }
+      });
+      
+      // 펜 크기 변경
+      penSizeEl.addEventListener('input', (e) => {
+        penSize = parseInt(e.target.value);
+        document.getElementById('penSizeValue').textContent = penSize + 'px';
+      });
+      
+      // 펜 색상 변경
+      penColorEl.addEventListener('input', (e) => {
+        penColor = e.target.value;
+      });
+      
+      saveBtn.addEventListener('click', saveNote);
+      undoBtn.addEventListener('click', undo);
+      redoBtn.addEventListener('click', redo);
+      
+      console.log('모든 이벤트 리스너 추가 완료');
+    }
+    
+    // DOM 로드 후 이벤트 리스너 초기화
+    console.log('스크립트 실행, readyState:', document.readyState);
+    if (document.readyState === 'loading') {
+      console.log('DOMContentLoaded 이벤트 대기');
+      document.addEventListener('DOMContentLoaded', () => {
+        console.log('DOMContentLoaded 발생');
+        initEventListeners();
+      });
+    } else {
+      console.log('DOM 이미 로드됨, 즉시 실행');
+      initEventListeners();
+    }
+    
+    // 키보드 단축키
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      } else if (e.key === 'Delete' && selectedElement) {
+        document.getElementById('deleteBtn').click();
+      }
+    });
+    
+    // 노트 로드
+    async function loadNote(noteId) {
+      try {
+        const response = await fetch(`/api/note/${noteId}/`);
+        const data = await response.json();
+        
+        if (data.content && data.content.type === 'onenote_canvas') {
+          elements = data.content.canvas.elements || [];
+          // 메인 그리기 영역 찾기
+          mainDrawingElement = elements.find(el => el.type === 'drawing');
+          renderAll();
+          document.getElementById('pageTitle').value = data.title || '';
+          currentNoteId = noteId;
+          document.getElementById('shareBtn').disabled = false;
+          saveState();
+        }
+      } catch (error) {
+        console.error('노트 로드 실패:', error);
+      }
+    }
+    
+    // URL에서 note_id 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    const noteId = urlParams.get('note_id');
+    if (noteId) {
+      loadNote(noteId);
+    }
+    
+    // 초기 상태 저장
+    saveState();
+  </script>
+</body>
+</html>
+

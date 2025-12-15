@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>히스토리 - {{ note.title }}</title>
+  <link rel="stylesheet" href="/static/css/theme.css" />
+  <style>
+    table { width:100%; border-collapse: collapse; }
+    th, td { border-bottom:1px solid var(--border); padding:8px; vertical-align: top; }
+    a.btn, button.btn { padding:4px 8px; border:1px solid var(--border); border-radius:6px; background: var(--bg); color: var(--fg); cursor: pointer; }
+    .diff { max-height: 240px; overflow:auto; border:1px solid var(--border); padding:8px; }
+    ins { background: #c8facc; text-decoration: none; }
+    del { background: #ffd6d6; text-decoration: line-through; }
+  </style>
+</head>
+<body>
+  <div class="appbar"><div class="title">히스토리 - {{ note.note_id }}</div><div style="flex:1"></div><a href="/adminpanel/notes/">노트 목록</a></div>
+  <main class="editor-wrap">
+    <h2>{{ note.title }}</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>시각</th>
+          <th>변경 요약(Diff)</th>
+          <th>조치</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% csrf_token %}
+        {% for h in histories %}
+        <tr>
+          <td>{{ h.timestamp }}</td>
+          <td>
+            <div class="diff">{{ h.diff_html|safe }}</div>
+            <div style="margin-top:6px">
+              <a class="btn" href="/history/{{ note.note_id }}/{{ h.history_id }}/" target="_blank">상세보기</a>
+            </div>
+          </td>
+          <td>
+            <form method="post" action="/history/{{ note.note_id }}/{{ h.history_id }}/restore/" onsubmit="return confirm('이 히스토리로 복원하시겠습니까? 현재 내용은 히스토리로 저장됩니다.');">
+              {% csrf_token %}
+              <button class="btn" type="submit">이 버전으로 복원</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3">히스토리가 없습니다.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>

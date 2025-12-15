@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bano 공유 보기</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin: 0; padding: 16px; }
+    .content { border: 1px solid #ddd; min-height: 320px; padding: 12px; }
+  </style>
+</head>
+<body>
+  <h1>{{ meta.title }}</h1>
+  <div class="content">
+    {% if content and content.type == 'html' %}
+      {{ content.html|safe }}
+    {% else %}
+      <pre>{{ content|default_if_none:"{}"|safe }}</pre>
+    {% endif %}
+  </div>
+  <div style="margin-top:16px">
+    <a href="/" class="home-btn" title="메인으로">메인 화면으로</a>
+  </div>
+  <style>
+    .home-btn {
+      display:inline-block; padding:8px 12px; border:1px solid #ddd; border-radius:8px;
+      background: linear-gradient(180deg, #f9f9fb, #f1f1f5);
+      color:#333; text-decoration:none; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .home-btn:hover { background: linear-gradient(180deg, #ffffff, #ececf0); }
+    .home-btn:active { transform: translateY(1px); }
+  </style>
+</body>
+</html>
