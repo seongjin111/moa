@@ -40,3 +40,34 @@
 
 ## 실행(초기화 예정)
 Windows PowerShell에서 가상환경/Django 설치 및 프로젝트 초기화를 진행합니다. 자세한 명령은 프로젝트 생성 후 업데이트됩니다.
+
+## 설치 직후 해야할것
+1. 
+```
+python -m venv venv
+```
+
+2.
+```
+./venv/Scripts/Activate.ps1
+
+또는
+ctrl shift p 
+-> 
+select python interpreter 
+-> 
+.\venv\Scripts\python.exe
+```
+
+보안 오류 뜨면
+```
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+3.
+```
+pip install -r requirements.txt
+```
+
+
+
+
