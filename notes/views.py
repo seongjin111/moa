@@ -42,12 +42,15 @@ def save_note(request: HttpRequest):
 
     # sanitize HTML if provided in our interim format
     if content_json.get('type') == 'html':
+        # Allow iframe for trusted providers (YouTube) and images; other tags
+        # remain restricted. We'll allow iframe tag but later filter by src.
         allowed_tags = bleach.sanitizer.ALLOWED_TAGS.union({
-            'p','br','b','i','u','strong','em','ul','ol','li','h1','h2','h3','h4','h5','h6','blockquote','code','pre','img','a','span','div','ins','del','hr'
+            'p','br','b','i','u','strong','em','ul','ol','li','h1','h2','h3','h4','h5','h6','blockquote','code','pre','img','a','span','div','ins','del','hr','iframe'
         })
         allowed_attrs = {**bleach.sanitizer.ALLOWED_ATTRIBUTES,
                          'a': ['href','title','target','rel'],
                          'img': ['src','alt','title'],
+                         'iframe': ['src','width','height','frameborder','allow','allowfullscreen','loading'],
                          'span': ['style'],
                          'p': ['style'], 'div': ['style'],
                          'h1': ['style'],'h2': ['style'],'h3': ['style'],'h4': ['style'],'h5': ['style'],'h6': ['style']}
@@ -63,6 +66,20 @@ def save_note(request: HttpRequest):
             strip=True
         )
         html = cleaner.clean(content_json.get('html',''))
+        # Post-filter iframes: only allow YouTube domains to remain
+        try:
+            import re
+            def _keep_only_trusted_iframes(s: str) -> str:
+                def repl(m):
+                    src = m.group(1) or ''
+                    # Allow youtube domains and youtube-nocookie
+                    if re.search(r'^(?:https?:)?//(?:www\.)?(youtube\.com|youtu\.be|youtube-nocookie\.com)', src, re.I):
+                        return m.group(0)
+                    return ''
+                return re.sub(r'<iframe[^>]*src=["\']([^"\']+)["\'][^>]*>.*?</iframe>', repl, s, flags=re.I|re.S)
+            html = _keep_only_trusted_iframes(html)
+        except Exception:
+            pass
         content_json['html'] = html
 
     # Support create or update
@@ -137,4 +154,9 @@ def get_note_content(request: HttpRequest, note_id: str):
     meta, content = storage.get_note(note_id)
     if not meta:
         return JsonResponse({'error': 'not found'}, status=404)
-    return JsonResponse({'note_id': note_id, 'content': content or {} })
+    # Also include existing share token for this note (if any)
+    try:
+        token = storage.find_share_for_note(note_id)
+    except Exception:
+        token = None
+    return JsonResponse({'note_id': note_id, 'content': content or {}, 'share_token': token})

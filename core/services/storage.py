@@ -177,6 +177,28 @@ def get_share(token: str) -> dict | None:
     return data
 
 
+def find_share_for_note(note_id: str) -> str | None:
+    """
+    Scan shares directory for an active share matching note_id and return its token.
+    Returns None if not found.
+    """
+    shares_dir = BASE / "shares"
+    if not shares_dir.exists():
+        return None
+    for p in shares_dir.iterdir():
+        if not p.is_file() or not p.name.endswith('.json'):
+            continue
+        try:
+            d = read_json(p)
+        except Exception:
+            d = None
+        if not d:
+            continue
+        if d.get('note_id') == note_id and d.get('active', True):
+            return d.get('token')
+    return None
+
+
 def set_share_active(token: str, active: bool):
     data = read_json(share_path(token)) or {}
     data["active"] = active

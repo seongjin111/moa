@@ -194,6 +194,8 @@
       document.getElementById('timestamp').textContent = new Intl.DateTimeFormat('ko-KR', opts).format(now);
     }
     updateTimestamp();
+    // Refresh timestamp every minute (60000ms) so displayed time stays current
+    try { setInterval(updateTimestamp, 60000); } catch(e) { /* ignore */ }
 
     function cmd(){ /* TipTap handles formatting via toolbar */ }
     function toContentJson(html){ return JSON.stringify({ type: 'html', html }); }
@@ -417,6 +419,102 @@
       // Placeholder logic removed
       clearInterval(observe);
     } }, 200);
+
+    // Page list click handling: open saved note or switch to unsaved page
+    (function(){
+      const pageList = document.getElementById('pageList');
+      if(!pageList) return;
+      pageList.addEventListener('click', async (e)=>{
+        const pg = e.target.closest('.page');
+        if(!pg) return;
+        // If already active, nothing to do
+        if (pg.classList.contains('active')) return;
+        // Toggle active class
+        const prev = pageList.querySelector('.page.active');
+        if (prev) prev.classList.remove('active');
+        pg.classList.add('active');
+
+        const nid = pg.dataset.noteId || null;
+        const titleText = pg.textContent.trim() || '제목 없음';
+        document.getElementById('title').value = titleText;
+        currentNoteId = nid;
+        updateHistoryLink();
+        document.getElementById('shareBtn').disabled = !currentNoteId;
+
+        if (!nid) {
+          // New/unsaved page: clear editor
+          try {
+            if (window.__tiptap) window.__tiptap.commands.setContent('', false);
+            else document.getElementById('editor').innerHTML = '';
+          } catch(e) { console.warn('[Bano] clear editor failed', e); }
+          return;
+        }
+
+        // Load note content via API
+        try {
+          const res = await fetch(`/api/note/${nid}/`);
+          if (!res.ok) {
+            console.error('[Bano] load note failed', await res.text());
+            return;
+          }
+          const data = await res.json();
+          const content = data.content || {};
+          if (content.type === 'html' && typeof content.html === 'string') {
+            try {
+              if (window.__tiptap) window.__tiptap.commands.setContent(content.html, false);
+              else document.getElementById('editor').innerHTML = content.html;
+            } catch(e) { console.warn('[Bano] apply loaded content failed', e); }
+          } else {
+            try { document.getElementById('editor').innerHTML = ''; } catch(_){}
+          }
+          // Update share panel for loaded note
+          try {
+            const panel = document.getElementById('sharePanel');
+            if (data.share_token) {
+              const shareUrl = `${location.origin}/s/${data.share_token}/`;
+              panel.style.display = 'inline-block';
+              panel.innerHTML = `생성된 링크: <a href="${shareUrl}" target="_blank" style="color:inherit; text-decoration:underline;">${shareUrl}</a>`
+                + (nid ? `<br/><a href="/history/${nid}/" target="_blank" style="color:inherit; text-decoration:underline;">히스토리</a>` : '');
+            } else {
+              // no existing token
+              if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
+            }
+          } catch(e){ console.warn('[Bano] update share panel failed', e); }
+        } catch(e){ console.error('[Bano] fetch note api failed', e); }
+      });
+    })();
+    // Add new page when + button clicked
+    (function(){
+      const addBtn = document.getElementById('addPageBtn');
+      const pageList = document.getElementById('pageList');
+      if(!addBtn || !pageList) return;
+      addBtn.addEventListener('click', (e)=>{
+        e.preventDefault();
+        // create new page element
+        const newPage = document.createElement('div');
+        newPage.className = 'page';
+        newPage.textContent = 'Untitled';
+        // no data-note-id for unsaved page
+        // insert at the end of list
+        pageList.appendChild(newPage);
+        // make it active
+        const prev = pageList.querySelector('.page.active');
+        if(prev) prev.classList.remove('active');
+        newPage.classList.add('active');
+        // clear editor and title, set currentNoteId to null
+        try { document.getElementById('title').value = ''; } catch(_){}
+        currentNoteId = null;
+        try {
+          if (window.__tiptap) window.__tiptap.commands.setContent('', false);
+          else document.getElementById('editor').innerHTML = '';
+        } catch(e){ console.warn('[Bano] clear editor failed', e); }
+        updateHistoryLink();
+        // keep share button enabled so user can save+share immediately
+        document.getElementById('shareBtn').disabled = false;
+        // focus title for quick typing
+        try { document.getElementById('title').focus(); } catch(_){}
+      });
+    })();
 
     // Placeholder logic removed
 

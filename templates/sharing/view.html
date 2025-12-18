@@ -18,6 +18,31 @@
       <pre>{{ content|default_if_none:"{}"|safe }}</pre>
     {% endif %}
   </div>
+  <script>
+    // Create iframes from deferred placeholders using DOM APIs (avoids innerHTML/TrustedTypes issues)
+    (function(){
+      try{
+        document.querySelectorAll('.deferred-iframe').forEach(function(place){
+          try{
+            var src = place.getAttribute('data-src');
+            if(!src) return;
+            var w = place.getAttribute('data-width') || 640;
+            var h = place.getAttribute('data-height') || 480;
+            var ifr = document.createElement('iframe');
+            ifr.src = src;
+            ifr.width = w;
+            ifr.height = h;
+            ifr.loading = 'lazy';
+            ifr.setAttribute('referrerpolicy','no-referrer-when-downgrade');
+            ifr.setAttribute('allow','accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+            ifr.setAttribute('allowfullscreen','true');
+            // Replace placeholder with iframe
+            place.parentNode.replaceChild(ifr, place);
+          }catch(e){ console.warn('deferred iframe failed', e); }
+        });
+      }catch(e){/* ignore */}
+    })();
+  </script>
   <div style="margin-top:16px">
     <a href="/" class="home-btn" title="메인으로">메인 화면으로</a>
   </div>

@@ -51,9 +51,50 @@
   });
 
   // YouTube insert via prompt
+  // Normalize common YouTube URLs to embed URLs and insert
+  function toYouTubeEmbedUrl(input) {
+    if (!input) return null;
+    try {
+      // Trim and remove surrounding whitespace
+      let url = input.trim();
+      // If user entered just an ID, accept it
+      if (/^[A-Za-z0-9_-]{6,}$/.test(url)) {
+        return `https://www.youtube-nocookie.com/embed/${url}`;
+      }
+      // Ensure protocol
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      const u = new URL(url);
+      const host = u.hostname.replace(/^www\./, '').toLowerCase();
+      // youtu.be short link
+      if (host === 'youtu.be') {
+        const id = u.pathname.slice(1);
+        return id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+      }
+      // youtube.com watch?v=ID or /watch
+      if (host === 'youtube.com' || host.endsWith('.youtube.com')) {
+        // watch?v=...
+        const v = u.searchParams.get('v');
+        if (v) return `https://www.youtube-nocookie.com/embed/${v}`;
+        // /embed/ID
+        const m = u.pathname.match(/\/embed\/([A-Za-z0-9_-]{6,})/);
+        if (m) return `https://www.youtube-nocookie.com/embed/${m[1]}`;
+      }
+      // fallback: if url already looks like an embed, allow it
+      if (u.pathname.includes('/embed/')) return url;
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   window.insertYouTube = () => {
     const url = prompt('YouTube 링크를 입력하세요');
-    if (url) editor.commands.setYoutubeVideo({ src: url });
+    const embed = toYouTubeEmbedUrl(url);
+    if (!embed) {
+      alert('유효한 YouTube 링크가 아닙니다. 예: https://www.youtube.com/watch?v=VIDEO_ID 또는 https://youtu.be/VIDEO_ID');
+      return;
+    }
+    editor.commands.setYoutubeVideo({ src: embed });
   };
 
   window.getEditorHTML = () => editor.getHTML();

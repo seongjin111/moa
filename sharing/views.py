@@ -18,6 +18,81 @@ def view_share(request: HttpRequest, token: str):
     if not meta or meta.get('status') in ('expired','deleted'):
         return HttpResponse('노트가 만료되었거나 삭제되었습니다.', status=404)
     has_edit = request.session.get(f'edit_session:{data["note_id"]}', False)
+    # Ensure iframe attributes needed by browsers / YouTube are present
+    if content and isinstance(content, dict) and content.get('type') == 'html':
+        try:
+            import re
+            html = content.get('html','') or ''
+            def _fix_iframe(m):
+                tag = m.group(0)
+                # ensure allow attribute
+                if 'allow=' not in tag:
+                    tag = tag.replace('<iframe', '<iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"')
+                # ensure loading attribute
+                if 'loading=' not in tag:
+                    tag = tag.replace('<iframe', '<iframe loading="lazy"')
+                # ensure referrerpolicy
+                if 'referrerpolicy=' not in tag:
+                    tag = tag.replace('<iframe', '<iframe referrerpolicy="no-referrer-when-downgrade"')
+                # ensure allowfullscreen
+                if 'allowfullscreen' not in tag:
+                    tag = tag.replace('<iframe', '<iframe allowfullscreen')
+                return tag
+            html = re.sub(r'<iframe[^>]*>', _fix_iframe, html, flags=re.I)
+            # Ensure youtube.com/embed -> youtube-nocookie.com/embed and add rel=0
+            try:
+                def _normalize_src(m):
+                    src = m.group(1) or ''
+                    if 'youtube.com/embed' in src and 'youtube-nocookie.com' not in src:
+                        src = src.replace('youtube.com/embed', 'youtube-nocookie.com/embed')
+                    # add rel=0 unless already present
+                    if '?' in src:
+                        if 'rel=' not in src:
+                            src = src + '&rel=0'
+                    else:
+                        src = src + '?rel=0'
+                    # add origin parameter for YouTube to validate origin
+                    try:
+                        from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+                        p = urlparse(src)
+                        qs = parse_qs(p.query)
+                        if 'origin' not in qs:
+                            origin = request.scheme + '://' + request.get_host()
+                            # append origin to query params
+                            if p.query:
+                                src = src + '&origin=' + origin
+                            else:
+                                src = src + ('&' if '?' in src else '?') + 'origin=' + origin
+                    except Exception:
+                        pass
+                    return f'src="{src}"'
+                html = re.sub(r'src=["\']([^"\']+)["\']', _normalize_src, html, flags=re.I)
+            except Exception:
+                pass
+            # Replace iframe tags with deferred placeholders to create iframes
+            try:
+                import html as _html
+                def _replace_iframe_with_placeholder(m):
+                    tag = m.group(0)
+                    # extract src/width/height
+                    src_m = re.search(r'src=["\']([^"\']+)["\']', tag, flags=re.I)
+                    w_m = re.search(r'width=["\']([^"\']+)["\']', tag, flags=re.I)
+                    h_m = re.search(r'height=["\']([^"\']+)["\']', tag, flags=re.I)
+                    src = src_m.group(1) if src_m else ''
+                    w = w_m.group(1) if w_m else '640'
+                    h = h_m.group(1) if h_m else '480'
+                    # escape attributes
+                    esc_src = _html.escape(src, quote=True)
+                    esc_w = _html.escape(w, quote=True)
+                    esc_h = _html.escape(h, quote=True)
+                    return f'<div class="deferred-iframe" data-src="{esc_src}" data-width="{esc_w}" data-height="{esc_h}"></div>'
+                html = re.sub(r'<iframe[^>]*>.*?</iframe>', _replace_iframe_with_placeholder, html, flags=re.I|re.S)
+            except Exception:
+                pass
+            content = dict(content)
+            content['html'] = html
+        except Exception:
+            pass
     return render(request, 'sharing/view.html', {'meta': meta, 'content': content, 'token': token, 'has_edit': has_edit})
 
 
