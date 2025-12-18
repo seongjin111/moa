@@ -17,6 +17,7 @@
     <input id="search" type="search" placeholder="검색" />
     <!-- 편집 기능 제거: 토큰 열기 제거 -->
     <div style="flex:1"></div>
+    <div id="sharePanel" style="display:none; margin-right:8px; padding:8px 12px; border-radius:8px; background:var(--panel); border:1px solid var(--border); font-size:12px; color:var(--muted); max-width:420px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div>
     <button id="themeToggle">모드전환</button>
     <a id="historyLink" class="btn" href="#" style="display:none"><button>히스토리</button></a>
     <div style="display:inline-block">
@@ -236,6 +237,14 @@
             if (window.__tiptap) window.__tiptap.commands.setContent(data.content.html, false);
           }
         } catch(e){ console.warn('[Bano] apply saved content failed', e); }
+        // Update page list title for the active page
+        try {
+          const pageEl = document.querySelector('#pageList .page.active');
+          if (pageEl) {
+            pageEl.textContent = title;
+            pageEl.dataset.noteId = data.note_id;
+          }
+        } catch(e) { console.warn('[Bano] update page list title failed', e); }
       } else {
         console.error('[Bano] save error', data);
       }
@@ -324,10 +333,15 @@
       if(res.ok){
         const shareUrl = `${location.origin}/s/${data.token}/`;
         navigator.clipboard?.writeText(shareUrl).catch(()=>{});
-        const area = document.getElementById('shareResult');
-        area.style.display = 'block';
-        area.innerHTML = `생성된 링크: <a href="${shareUrl}" target="_blank">${shareUrl}</a><br/>`
-          + (currentNoteId ? `히스토리: <a href="/history/${currentNoteId}/" target="_blank">열람</a>` : '');
+        // Update compact share panel in the appbar
+        const panel = document.getElementById('sharePanel');
+        if (panel) {
+          panel.style.display = 'inline-block';
+          panel.innerHTML = `생성된 링크: <a href="${shareUrl}" target="_blank" style="color:inherit; text-decoration:underline;">${shareUrl}</a>`
+            + (currentNoteId ? `<br/><a href="/history/${currentNoteId}/" target="_blank" style="color:inherit; text-decoration:underline;">히스토리</a>` : '');
+        }
+        // Keep legacy shareResult (hidden) for compatibility
+        try { const area = document.getElementById('shareResult'); if(area){ area.style.display='none'; } } catch(_){}
         console.log('[Bano] share created', data.token);
       } else {
         console.error('[Bano] share error', data);
