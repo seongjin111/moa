@@ -272,19 +272,25 @@
       if (viewPwd) viewPwd.focus();
     });
     document.getElementById('dlgCancel').addEventListener('click', async ()=>{
-      // Always cancel share creation and close modal
-      const choiceRow = document.getElementById('choiceRow');
-      const pwdRow = document.getElementById('pwdRow');
-      const dlg = document.getElementById('shareDialog');
-      const overlay = document.getElementById('modalOverlay');
-      dlg.style.display = 'none';
-      overlay.style.display = 'none';
-      document.body.style.overflow = '';
-      try { document.querySelector('.layout')?.classList.remove('blurred'); } catch(e) {}
-      try { if (window.__tiptap) window.__tiptap.setEditable(true); } catch(e) {}
-      // Reset to initial choice step for next open
-      if (pwdRow) pwdRow.style.display = 'none';
-      if (choiceRow) choiceRow.style.display = 'block';
+      // If user cancels the password prompt, still create a share WITHOUT a view password.
+      // finalizeShare will close the dialog and restore UI state.
+      try {
+        await finalizeShare('');
+      } catch(e) {
+        // If finalizeShare fails, ensure modal is closed and UI restored.
+        const choiceRow = document.getElementById('choiceRow');
+        const pwdRow = document.getElementById('pwdRow');
+        const dlg = document.getElementById('shareDialog');
+        const overlay = document.getElementById('modalOverlay');
+        dlg.style.display = 'none';
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+        try { document.querySelector('.layout')?.classList.remove('blurred'); } catch(e) {}
+        try { if (window.__tiptap) window.__tiptap.setEditable(true); } catch(e) {}
+        if (pwdRow) pwdRow.style.display = 'none';
+        if (choiceRow) choiceRow.style.display = 'block';
+        console.error('[Bano] finalizeShare failed on cancel', e);
+      }
     });
     document.getElementById('pwdApply').addEventListener('click', async ()=>{
       const pw = (document.getElementById('viewPwd').value||'').trim();
